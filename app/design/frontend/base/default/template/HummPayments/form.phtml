@@ -4,7 +4,7 @@
             <?php
             $launch_time_string = Mage::getStoreConfig( 'payment/HummPayments/launch_time_string' );
             $is_after           = ( time() - strtotime( $launch_time_string ) >= 0 ) || Mage::getStoreConfig( 'payment/HummPayments/force_humm' );
-            if ( $is_after && Mage::getStoreConfig( 'payment/HummPayments/specificcountry' ) == 'AU' ) {
+            if ( $is_after || Mage::getStoreConfig( 'payment/HummPayments/specificcountry' ) == 'AU' ) {
                 ?>
                 <img src="<?php echo Mage::getDesign()->getSkinUrl( "images/Humm/humm-logo.png" ) ?>"
                      style="width:auto;height:15px;margin-right:6px;display:inline;"/>

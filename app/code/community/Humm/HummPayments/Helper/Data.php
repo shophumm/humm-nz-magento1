@@ -16,7 +16,7 @@ class Humm_HummPayments_Helper_Data extends Mage_Core_Helper_Abstract {
     public static function getTitle() {
         $launch_time_string = Mage::getStoreConfig( 'payment/HummPayments/launch_time_string' );
         $is_after           = ( time() - strtotime( $launch_time_string ) >= 0 ) || Mage::getStoreConfig( 'payment/HummPayments/force_humm' );
-        $title              = ( $is_after && Mage::getStoreConfig( 'payment/HummPayments/specificcountry' ) == 'AU' ) ? 'Humm' : 'Oxipay';
+        $title              = ( $is_after || Mage::getStoreConfig( 'payment/HummPayments/specificcountry' ) == 'AU' ) ? 'Humm' : 'Oxipay';
 
         return $title;
     }

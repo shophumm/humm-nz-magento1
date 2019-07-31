@@ -7,9 +7,9 @@
  *
  */
 class Humm_HummPayments_Block_Form_HummPayments extends Mage_Payment_Block_Form {
-    const LAUNCH_TIME_URL = 'https://s3-ap-southeast-2.amazonaws.com/humm-variables/launch-time.txt';
-    const LAUNCH_TIME_DEFAULT = "2019-04-07 14:30:00 UTC";
-    const LAUNCH_TIME_CHECK_ENDS = "2019-10-07 13:30:00 UTC";
+    const LAUNCH_TIME_URL = 'https://s3-ap-southeast-2.amazonaws.com/humm-variables/nz-launch-time.txt';
+    const LAUNCH_TIME_DEFAULT = "2019-10-07 14:30:00 UTC";
+    const LAUNCH_TIME_CHECK_ENDS = "2020-01-07 13:30:00 UTC";
 
     protected function _construct() {
         $this->updateLaunchDate();

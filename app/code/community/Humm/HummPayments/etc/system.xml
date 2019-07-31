@@ -64,7 +64,7 @@
                             <show_in_website>1</show_in_website>
                             <show_in_store>0</show_in_store>
                             <sort_order>3.7</sort_order>
-                            <tooltip>You will switch to Humm if this is set to 'yes' and the store is in Australia. Otherwise you will be automatically switched over on the official Humm launch date</tooltip>
+                            <tooltip>(For New Zealand Stores only) You will switch to Humm if this is set to 'yes'. Otherwise you will be automatically switched over on the official Humm launch date</tooltip>
                         </force_humm>
                         <humm_approved_order_status translate="label">
                             <label>Status for Humm Approved Orders</label>
