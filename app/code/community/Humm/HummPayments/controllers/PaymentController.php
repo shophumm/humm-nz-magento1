@@ -424,7 +424,7 @@ class Humm_HummPayments_PaymentController extends Mage_Core_Controller_Front_Act
      * checks the quote for validity
      * @throws Mage_Api_Exception
      */
-    private function validateQuote() {
+    protected function validateQuote() {
         $specificCurrency = null;
         $order            = $this->getLastRealOrder();
         $total            = $order->getTotalDue();
@@ -471,7 +471,7 @@ class Humm_HummPayments_PaymentController extends Mage_Core_Controller_Front_Act
      * Get current checkout session
      * @return Mage_Core_Model_Abstract
      */
-    private function getCheckoutSession() {
+    protected function getCheckoutSession() {
         return Mage::getSingleton( 'checkout/session' );
     }
 
@@ -481,7 +481,7 @@ class Humm_HummPayments_PaymentController extends Mage_Core_Controller_Front_Act
      * @param $checkoutUrl
      * @param $payload
      */
-    private function postToCheckout( $checkoutUrl, $payload ) {
+    protected function postToCheckout( $checkoutUrl, $payload ) {
         echo
         "<html>
             <body>
@@ -507,7 +507,7 @@ class Humm_HummPayments_PaymentController extends Mage_Core_Controller_Front_Act
      *
      * @return Mage_Sales_Model_Order
      */
-    private function getOrderById( $orderId ) {
+    protected function getOrderById( $orderId ) {
         return Mage::getModel( 'sales/order' )->loadByIncrementId( $orderId );
     }
 
@@ -515,7 +515,7 @@ class Humm_HummPayments_PaymentController extends Mage_Core_Controller_Front_Act
      * retrieve the merchants humm api key
      * @return mixed
      */
-    private function getApiKey() {
+    protected function getApiKey() {
         return Mage::getStoreConfig( 'payment/HummPayments/api_key' );
     }
 
@@ -532,7 +532,7 @@ class Humm_HummPayments_PaymentController extends Mage_Core_Controller_Front_Act
      * retrieve the last order created by this session
      * @return null
      */
-    private function getLastRealOrder() {
+    protected function getLastRealOrder() {
         $orderId = Mage::getSingleton( 'checkout/session' )->getLastRealOrderId();
 
         $order =
@@ -552,7 +552,7 @@ class Humm_HummPayments_PaymentController extends Mage_Core_Controller_Front_Act
      * @return $this
      * @throws Exception
      */
-    private function cancelOrder( Mage_Sales_Model_Order $order ) {
+    protected function cancelOrder( Mage_Sales_Model_Order $order ) {
         if ( ! $order->isCanceled() ) {
             $order
                 ->cancel()
@@ -570,7 +570,7 @@ class Humm_HummPayments_PaymentController extends Mage_Core_Controller_Front_Act
      *
      * @return $this
      */
-    private function restoreCart( Mage_Sales_Model_Order $order, $refillStock = false ) {
+    protected function restoreCart( Mage_Sales_Model_Order $order, $refillStock = false ) {
         // return all products to shopping cart
         $quoteId = $order->getQuoteId();
         $quote   = Mage::getModel( 'sales/quote' )->load( $quoteId );
