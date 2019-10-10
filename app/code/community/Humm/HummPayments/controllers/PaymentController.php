@@ -408,6 +408,11 @@ class Humm_HummPayments_PaymentController extends Mage_Core_Controller_Front_Act
             'x_test'                       => 'false',
             'version_info'                 => 'Humm_' . (string) Mage::getConfig()->getNode()->modules->Humm_HummPayments->version . '_on_magento' . substr( Mage::getVersion(), 0, 4 )
         );
+
+        if (!Mage::getStoreConfigFlag('payment/HummPayments/hide_versions')) {
+            $data['version_info'] = 'Humm_' . (string) Mage::getConfig()->getNode()->modules->Humm_HummPayments->version . '_on_magento' . substr(Mage::getVersion(), 0, 4);
+        }
+
         $apiKey                 = $this->getApiKey();
         $signature              = Humm_HummPayments_Helper_Crypto::generateSignature( $data, $apiKey );
         $data['x_signature']    = $signature;

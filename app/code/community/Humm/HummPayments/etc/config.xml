@@ -71,6 +71,7 @@
                 <automatic_invoice>0</automatic_invoice> <!-- 0:No -->
                 <email_customer>1</email_customer>
                 <specificcountry>AU</specificcountry>
+                <hide_versions>0</hide_versions>
             </HummPayments>
         </payment>
         <humm>
