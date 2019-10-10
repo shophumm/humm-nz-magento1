@@ -22,7 +22,7 @@ class Humm_HummPayments_Model_Paymentmethod extends Mage_Payment_Model_Method_Ab
      * @return string
      */
     public function getOrderPlaceRedirectUrl() {
-        return Mage::getUrl( 'HummPayments/payment/start', array( '_secure' => false ) );
+        return Mage::getUrl( 'hummpayments/payment/start', array( '_secure' => false ) );
     }
 
     public function refund( Varien_Object $payment, $amount ) {

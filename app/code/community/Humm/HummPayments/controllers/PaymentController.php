@@ -10,7 +10,7 @@ class Humm_HummPayments_PaymentController extends Mage_Core_Controller_Front_Act
     const HUMM_NZ_COUNTRY_CODE = 'NZ';
 
     /**
-     * GET: /HummPayments/payment/start
+     * GET: /hummpayments/payment/start
      *
      * Begin processing payment via humm
      */
@@ -55,7 +55,7 @@ class Humm_HummPayments_PaymentController extends Mage_Core_Controller_Front_Act
     }
 
     /**
-     * GET: /HummPayments/payment/cancel
+     * GET: /hummpayments/payment/cancel
      * Cancel an order given an order id
      */
     public function cancelAction() {
@@ -91,7 +91,7 @@ class Humm_HummPayments_PaymentController extends Mage_Core_Controller_Front_Act
     }
 
     /**
-     * GET: HummPayments/payment/complete
+     * GET: hummpayments/payment/complete
      *
      * callback - humm calls this once the payment process has been completed.
      */
@@ -183,7 +183,7 @@ class Humm_HummPayments_PaymentController extends Mage_Core_Controller_Front_Act
         }
 
         if ( $result == "completed" ) {
-            if( $status = Humm_HummPayments_Helper_OrderStatus::STATUS_CANCELED ){
+            if( $status === Humm_HummPayments_Helper_OrderStatus::STATUS_CANCELED ){
                 $order->setState(Mage_Sales_Model_Order::STATE_NEW, true, 'Order uncancelled by humm.', false );
                 $order->setBaseDiscountCanceled(0);
                 $order->setBaseShippingCanceled(0);
