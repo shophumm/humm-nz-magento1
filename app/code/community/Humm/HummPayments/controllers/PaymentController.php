@@ -140,16 +140,12 @@ class Humm_HummPayments_PaymentController extends Mage_Core_Controller_Front_Act
             $select = $write->select()
                             ->forUpdate()
                             ->from( array( 't' => $table ),
-                                array( 'state' ) )
+                                array( 'state', 'status' ) )
                             ->where( 'increment_id = ?', $orderId );
-            $state = $write->fetchOne( $select );
+            $state_and_status = $write->fetchRow( $select );
 
-            $select_status = $write->select()
-                            ->forUpdate()
-                            ->from( array( 't' => $table ),
-                                array( 'status' ) )
-                            ->where( 'increment_id = ?', $orderId );
-            $status = $write->fetchOne( $select_status );
+            $state = $state_and_status['state'];
+            $status = $state_and_status['status'];
 
             if ( $state === Mage_Sales_Model_Order::STATE_PENDING_PAYMENT ) {
                 $whereQuery = array( 'increment_id = ?' => $orderId );
