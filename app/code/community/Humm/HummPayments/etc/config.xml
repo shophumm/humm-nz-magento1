@@ -40,17 +40,6 @@
                 </setup>
             </HummPayments_setup>
         </resources>
-        <events>
-            <adminhtml_init_system_config>
-                <observers>
-                    <humm_hummPayments_settings_carryover_observer>
-                        <type>singleton</type>
-                        <class>Humm_HummPayments_Model_Observer</class>
-                        <method>carryOverSettings</method>
-                    </humm_hummPayments_settings_carryover_observer>
-                </observers>
-            </adminhtml_init_system_config>
-        </events>
     </global>
     <!-- End Dependency Injection Configuration -->
 
