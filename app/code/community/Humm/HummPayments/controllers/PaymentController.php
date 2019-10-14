@@ -402,7 +402,6 @@ class Humm_HummPayments_PaymentController extends Mage_Core_Controller_Front_Act
             'x_customer_shipping_state'    => str_replace( PHP_EOL, ' ', $shippingAddress_region ),
             'x_customer_shipping_zip'      => str_replace( PHP_EOL, ' ', $shippingAddress_postcode ),
             'x_test'                       => 'false',
-            'version_info'                 => 'Humm_' . (string) Mage::getConfig()->getNode()->modules->Humm_HummPayments->version . '_on_magento' . substr( Mage::getVersion(), 0, 4 )
         );
 
         if (!Mage::getStoreConfigFlag('payment/HummPayments/hide_versions')) {
