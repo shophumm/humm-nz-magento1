@@ -72,14 +72,14 @@ class Humm_HummPayments_Helper_Data extends Mage_Core_Helper_Abstract {
      * @return string
      */
     public static function getCompleteUrl() {
-        return Mage::getBaseUrl() . 'HummPayments/payment/complete';
+        return Mage::getBaseUrl() . 'hummpayments/payment/complete';
     }
 
     /**
      * @return string
      */
     public static function getCancelledUrl( $orderId ) {
-        return Mage::getBaseUrl() . "HummPayments/payment/cancel?orderId=$orderId";
+        return Mage::getBaseUrl() . "hummpayments/payment/cancel?orderId=$orderId";
     }
 }
 

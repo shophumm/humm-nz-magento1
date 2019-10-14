@@ -10,7 +10,7 @@ class Humm_HummPayments_PaymentController extends Mage_Core_Controller_Front_Act
     const HUMM_NZ_COUNTRY_CODE = 'NZ';
 
     /**
-     * GET: /HummPayments/payment/start
+     * GET: /hummpayments/payment/start
      *
      * Begin processing payment via humm
      */
@@ -55,7 +55,7 @@ class Humm_HummPayments_PaymentController extends Mage_Core_Controller_Front_Act
     }
 
     /**
-     * GET: /HummPayments/payment/cancel
+     * GET: /hummpayments/payment/cancel
      * Cancel an order given an order id
      */
     public function cancelAction() {
@@ -91,7 +91,7 @@ class Humm_HummPayments_PaymentController extends Mage_Core_Controller_Front_Act
     }
 
     /**
-     * GET: HummPayments/payment/complete
+     * GET: hummpayments/payment/complete
      *
      * callback - humm calls this once the payment process has been completed.
      */
@@ -140,16 +140,12 @@ class Humm_HummPayments_PaymentController extends Mage_Core_Controller_Front_Act
             $select = $write->select()
                             ->forUpdate()
                             ->from( array( 't' => $table ),
-                                array( 'state' ) )
+                                array( 'state', 'status' ) )
                             ->where( 'increment_id = ?', $orderId );
-            $state = $write->fetchOne( $select );
+            $state_and_status = $write->fetchRow( $select );
 
-            $select_status = $write->select()
-                            ->forUpdate()
-                            ->from( array( 't' => $table ),
-                                array( 'status' ) )
-                            ->where( 'increment_id = ?', $orderId );
-            $status = $write->fetchOne( $select_status );
+            $state = $state_and_status['state'];
+            $status = $state_and_status['status'];
 
             if ( $state === Mage_Sales_Model_Order::STATE_PENDING_PAYMENT ) {
                 $whereQuery = array( 'increment_id = ?' => $orderId );
@@ -183,7 +179,7 @@ class Humm_HummPayments_PaymentController extends Mage_Core_Controller_Front_Act
         }
 
         if ( $result == "completed" ) {
-            if( $status = Humm_HummPayments_Helper_OrderStatus::STATUS_CANCELED ){
+            if( $status === Humm_HummPayments_Helper_OrderStatus::STATUS_CANCELED ){
                 $order->setState(Mage_Sales_Model_Order::STATE_NEW, true, 'Order uncancelled by humm.', false );
                 $order->setBaseDiscountCanceled(0);
                 $order->setBaseShippingCanceled(0);
@@ -408,6 +404,11 @@ class Humm_HummPayments_PaymentController extends Mage_Core_Controller_Front_Act
             'x_test'                       => 'false',
             'version_info'                 => 'Humm_' . (string) Mage::getConfig()->getNode()->modules->Humm_HummPayments->version . '_on_magento' . substr( Mage::getVersion(), 0, 4 )
         );
+
+        if (!Mage::getStoreConfigFlag('payment/HummPayments/hide_versions')) {
+            $data['version_info'] = 'Humm_' . (string) Mage::getConfig()->getNode()->modules->Humm_HummPayments->version . '_on_magento' . substr(Mage::getVersion(), 0, 4);
+        }
+
         $apiKey                 = $this->getApiKey();
         $signature              = Humm_HummPayments_Helper_Crypto::generateSignature( $data, $apiKey );
         $data['x_signature']    = $signature;
@@ -419,7 +420,7 @@ class Humm_HummPayments_PaymentController extends Mage_Core_Controller_Front_Act
      * checks the quote for validity
      * @throws Mage_Api_Exception
      */
-    private function validateQuote() {
+    protected function validateQuote() {
         $specificCurrency = null;
         $order            = $this->getLastRealOrder();
         $total            = $order->getTotalDue();
@@ -466,7 +467,7 @@ class Humm_HummPayments_PaymentController extends Mage_Core_Controller_Front_Act
      * Get current checkout session
      * @return Mage_Core_Model_Abstract
      */
-    private function getCheckoutSession() {
+    protected function getCheckoutSession() {
         return Mage::getSingleton( 'checkout/session' );
     }
 
@@ -476,7 +477,7 @@ class Humm_HummPayments_PaymentController extends Mage_Core_Controller_Front_Act
      * @param $checkoutUrl
      * @param $payload
      */
-    private function postToCheckout( $checkoutUrl, $payload ) {
+    protected function postToCheckout( $checkoutUrl, $payload ) {
         echo
         "<html>
             <body>
@@ -502,7 +503,7 @@ class Humm_HummPayments_PaymentController extends Mage_Core_Controller_Front_Act
      *
      * @return Mage_Sales_Model_Order
      */
-    private function getOrderById( $orderId ) {
+    protected function getOrderById( $orderId ) {
         return Mage::getModel( 'sales/order' )->loadByIncrementId( $orderId );
     }
 
@@ -510,7 +511,7 @@ class Humm_HummPayments_PaymentController extends Mage_Core_Controller_Front_Act
      * retrieve the merchants humm api key
      * @return mixed
      */
-    private function getApiKey() {
+    protected function getApiKey() {
         return Mage::getStoreConfig( 'payment/HummPayments/api_key' );
     }
 
@@ -527,7 +528,7 @@ class Humm_HummPayments_PaymentController extends Mage_Core_Controller_Front_Act
      * retrieve the last order created by this session
      * @return null
      */
-    private function getLastRealOrder() {
+    protected function getLastRealOrder() {
         $orderId = Mage::getSingleton( 'checkout/session' )->getLastRealOrderId();
 
         $order =
@@ -547,7 +548,7 @@ class Humm_HummPayments_PaymentController extends Mage_Core_Controller_Front_Act
      * @return $this
      * @throws Exception
      */
-    private function cancelOrder( Mage_Sales_Model_Order $order ) {
+    protected function cancelOrder( Mage_Sales_Model_Order $order ) {
         if ( ! $order->isCanceled() ) {
             $order
                 ->cancel()
@@ -565,7 +566,7 @@ class Humm_HummPayments_PaymentController extends Mage_Core_Controller_Front_Act
      *
      * @return $this
      */
-    private function restoreCart( Mage_Sales_Model_Order $order, $refillStock = false ) {
+    protected function restoreCart( Mage_Sales_Model_Order $order, $refillStock = false ) {
         // return all products to shopping cart
         $quoteId = $order->getQuoteId();
         $quote   = Mage::getModel( 'sales/quote' )->load( $quoteId );
