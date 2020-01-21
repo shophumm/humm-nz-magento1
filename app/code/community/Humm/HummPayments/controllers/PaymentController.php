@@ -163,8 +163,7 @@ class Humm_HummPayments_PaymentController extends Mage_Core_Controller_Front_Act
                 $write->update( $table, $dataQuery, $whereQuery );
             } else {
                 $write->commit();
-
-                $this->sendResponse( $isFromAsyncCallback, $result, $orderId );
+                $this->sendResponse( $isFromAsyncCallback, $result, $state, $orderId );
 
                 return;
             }
@@ -266,7 +265,7 @@ class Humm_HummPayments_PaymentController extends Mage_Core_Controller_Front_Act
             $this->restoreCart( $order );
         }
         Mage::getSingleton( 'checkout/session' )->unsQuoteId();
-        $this->sendResponse( $isFromAsyncCallback, $result, $orderId );
+        $this->sendResponse( $isFromAsyncCallback, $result, $order->getState(), $orderId );
 
         return;
     }
@@ -292,10 +291,10 @@ class Humm_HummPayments_PaymentController extends Mage_Core_Controller_Front_Act
         return false;
     }
 
-    private function sendResponse( $isFromAsyncCallback, $result, $orderId ) {
+    private function sendResponse( $isFromAsyncCallback, $result, $state, $orderId ) {
         if ( $isFromAsyncCallback ) {
             // if from POST request (from asynccallback)
-            $jsonData = json_encode( [ "result" => $result, "order_id" => $orderId ] );
+            $jsonData = json_encode( [ "result" => $state, "order_id" => $orderId ] );
             $this->getResponse()->setHeader( 'Content-type', 'application/json' );
             $this->getResponse()->setBody( $jsonData );
         } else {
