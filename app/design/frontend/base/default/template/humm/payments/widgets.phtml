@@ -1,0 +1,16 @@
+<?php
+if (!$this->isActive()) {
+    return;
+}
+
+if (!strcmp($this->getWidgetPageType(),'product')) {
+    $productPrice = $this->getProduct();
+    $jsScript = sprintf("%s%s%s",'<script src="https://widgets.shophumm.com.au/content/scripts/price-info.js?productPrice=',$productPrice,'&LittleOnly&element=%23product-options-wrapper"></script>');
+    echo $jsScript;
+}
+
+if (!strcmp($this->getWidgetPageType(),'cart')) {
+    $cartPrice = $this->getCart();
+    $jsCart = sprintf("%s%s%s",'<script src="https://widgets.shophumm.com.au/content/scripts/price-info.js?productPrice=',$cartPrice,'&LittleOnly&element=%23shopping-cart-totals-table"></script>');
+    echo $jsCart;
+}
