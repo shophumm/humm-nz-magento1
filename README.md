@@ -41,7 +41,7 @@ copy follow files
 /skin/adminhtml/base/default/images/Humm/
 
 
-in short, copy app and skin to the magento1 website same folders 
+in short, copy app and skin to the magento1 website same name folders 
 
 New functions 
 
