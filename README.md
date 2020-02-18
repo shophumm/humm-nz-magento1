@@ -53,10 +53,10 @@ New functions
 5. Add API timeout configuration 
 6. Refund  function 
 7. Support NZ and AU stores 
-8. Force Humm functions auto swift 
+8. Force Humm function auto swift 
 9. Log file rebuild 
 10.dynamic widgets show position 
 11.remove unnecessary hardcoded
-12.redesign cancel order functions
+12.redesign cancel order function
 
 
