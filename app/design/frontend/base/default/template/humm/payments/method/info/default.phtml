@@ -3,13 +3,9 @@
     $title = $this->getMethod()->getTitle();
 ?>
 
-<div id="zip_payment_info">
+<div id="humm_payment_info">
     <?php if(!empty($logo)) : ?>
-        <img src="<?php echo $this->escapeUrl($logo); ?>" alt="Zip Payment"/>
-    <?php endif; ?>
-
-    <?php if(!empty($title)) : ?>
-        <span data-zm-asset="checkouttitle" data-zm-widget="inline"><?php echo $this->escapeHtml($title); ?></span>
+        <img src="<?php echo $this->escapeUrl($logo); ?>" alt="Humm Payment"/>
     <?php endif; ?>
 </div>
 
@@ -32,7 +28,7 @@
 <?php echo $this->getChildHtml(); ?>
 
 <style type="text/css">
-#zip_payment_info img {
+#humm_payment_info img {
     height: 36px;
     vertical-align: middle;
     padding: 5px 0;
@@ -40,7 +36,7 @@
     line-height: 26px;
     margin-right: 5px;
 }
-#zip_payment_info > span {
+#humm_payment_info > span {
     display: inline-block;
     line-height: 26px;
     padding: 5px 0;

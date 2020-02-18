@@ -5,13 +5,8 @@
 ?>
 
 <?php if(!empty($logo)) : ?>
-    <img src="<?php echo $this->escapeUrl($logo); ?>" alt="Zip Payment"/>
+    <img src="<?php echo $this->escapeUrl($logo); ?>" alt="Humm Payment"/>
 <?php endif; ?>
-
-<?php if(!empty($title)) : ?>
-    <span data-zm-asset="checkouttitle" data-zm-widget="inline"><?php echo $this->escapeHtml($title); ?></span>
-<?php endif; ?>
-
 
 <style type="text/css">
 input#p_method_<?php echo $this->escapeHtml($methodCode); ?> {
