@@ -26,7 +26,7 @@ A rule must be added to varnish configuration for any magento installation runni
 Must exclude: `.*HummPayments.`* from all caching.
 
 
-New Version Update
+New Version Release 
 
 copy follow files 
 
@@ -40,6 +40,8 @@ copy follow files
 /skin/frontend/base/default/images/Humm/
 /skin/adminhtml/base/default/images/Humm/
 
+
+in short, copy app and skin to the magento1 website same folders 
 
 New functions 
 
@@ -55,5 +57,6 @@ New functions
 9. Log file rebuild 
 10.dynamic widgets show position 
 11.remove unnecessary hardcoded
+12.redesign cancel order functions
 
 
