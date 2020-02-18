@@ -1,6 +1,5 @@
 <?xml version="1.0"?>
 <config>
-
     <modules>
         <Humm_Payments>
             <version>2.0.0</version>
@@ -37,7 +36,7 @@
 
     <frontend>
         <secure_url>
-            <humm_payments_checkout>/humm_payments/checkout</humm_payments_checkout>
+            <humm_payments_checkout>humm_payments/checkout</humm_payments_checkout>
         </secure_url>
         <routers>
             <humm_payments>
@@ -65,7 +64,17 @@
             </modules>
         </translate>
     </frontend>
-
+    <admin>
+        <routers>
+            <adminhtml>
+                <args>
+                    <modules>
+                        <Humm_Payments before="Mage_Adminhtml">Humm_Payments_Adminhtml</Humm_Payments>
+                    </modules>
+                </args>
+            </adminhtml>
+        </routers>
+    </admin>
     <adminhtml>
         <events>
             <adminhtml_init_system_config>
@@ -77,13 +86,24 @@
                 </observers>
             </adminhtml_init_system_config>
         </events>
+        <menu>
+            <sales>
+                <children>
+                    <humm_payments translate="title" module="humm_payments">
+                        <sort_order>10</sort_order>
+                        <title>Orders - Humm</title>
+                        <action>adminhtml/order/</action>
+                    </humm_payments>
+                </children>
+            </sales>
+        </menu>
     </adminhtml>
 
     <default>
         <payment>
             <humm_payments>
                 <active>1</active>
-                <title>Humm payments </title>
+                <title>Humm payments</title>
                 <model>humm_payments/Paymentmethod</model>
                 <environment>sandbox</environment>
                 <order_status>processing</order_status>
@@ -157,7 +177,7 @@
     <custom>
         <payment>
             <humm_payments>
-                 <logo>https://www.shophumm.com.au//sites/default/files/humm-logo.png</logo>
+                <logo>https://www.shophumm.com.au//sites/default/files/humm-logo.png</logo>
                 <portal>
                     <sandbox></sandbox>
                     <production></production>
@@ -168,7 +188,8 @@
                     </error>
                     <failure>
                         <heading>Something went wrong. Please try to checkout out again</heading>
-                        <content><![CDATA[Please contact the merchant Humm Help Center</a> for any enquiries]]></content>
+                        <content>
+                            <![CDATA[Please contact the merchant Humm Help Center</a> for any enquiries]]></content>
                     </failure>
                 </checkout>
                 <country_currency>
@@ -179,7 +200,8 @@
                     <timeout>0</timeout>
                 </api>
                 <debug>
-                    <log_private_data_keys>ACCT,EXPDATE,CVV2,CARDISSUE,CARDSTART,CREDITCARDTYPE,USER,PWD,SIGNATURE</log_private_data_keys>
+                    <log_private_data_keys>ACCT,EXPDATE,CVV2,CARDISSUE,CARDSTART,CREDITCARDTYPE,USER,PWD,SIGNATURE
+                    </log_private_data_keys>
                 </debug>
                 <widgets>
                     <enabled>1</enabled>
