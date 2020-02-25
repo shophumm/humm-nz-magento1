@@ -360,14 +360,9 @@ class Humm_Payments_PaymentController extends Mage_Core_Controller_Front_Action
      */
     protected function cancelOrder(Mage_Sales_Model_Order $order)
     {
-        if (!$order->isCanceled()) {
-            $order
-                ->cancel()
-                ->setStatus(Humm_Payments_Helper_OrderStatus::STATUS_CANCELED)
-                ->addStatusHistoryComment($this->__("Order #" . ($order->getId()) . " was canceled by customer."));
+        if ($order->getId() && $order->getState() != Mage_Sales_Model_Order::STATE_CANCELED) {
+            $order->registerCancellation("Order #" . ($order->getId()) . " was canceled by Humm Payment or customer.")->save();
         }
-
-        return $this;
     }
 
     /**
@@ -400,7 +395,6 @@ class Humm_Payments_PaymentController extends Mage_Core_Controller_Front_Action
                 self::LOG_FILE
             );
             $this->cancelOrder($order);
-            $order->save();
         }
         $this->_redirect('checkout/cart');
     }
