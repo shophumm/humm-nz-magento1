@@ -9,8 +9,8 @@ class Humm_Payments_Helper_DataHumm extends Mage_Core_Helper_Abstract
 {
 
     const LAUNCH_TIME_URL = 'https://s3-ap-southeast-2.amazonaws.com/humm-variables/launch-time.txt';
-    const LAUNCH_TIME_DEFAULT = "2020-05-01 00:00:00 UTC";
-    const LAUNCH_TIME_CHECK_ENDS = "2020-05-01 00:00:00 UTC";
+    const LAUNCH_TIME_DEFAULT = "2020-05-11 00:00:00 UTC";
+    const LAUNCH_TIME_CHECK_ENDS = "2020-05-11 00:00:00 UTC";
     const Log_file = 'humm.log';
     const URLS = [
         'AU' => [
