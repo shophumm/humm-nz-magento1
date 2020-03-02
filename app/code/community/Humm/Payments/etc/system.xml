@@ -246,7 +246,7 @@
                                                     <timeout translate="label">
                                                         <label>Timeout</label>
                                                         <tooltip>Identify timeout (seconds) for API calls</tooltip>
-                                                        <comment>The default value is 20 secounds, will disable timeout if 0 been set</comment>
+                                                        <comment>The default value is set to 120 secounds</comment>
                                                         <config_path>payment/humm_payments/api/timeout</config_path>
                                                         <frontend_type>text</frontend_type>
                                                         <frontend_class>validate-number</frontend_class>

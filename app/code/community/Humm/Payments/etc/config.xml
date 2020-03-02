@@ -177,7 +177,7 @@
     <custom>
         <payment>
             <humm_payments>
-                <logo>https://www.shophumm.com.au//sites/default/files/humm-logo.png</logo>
+                <logo>https://dev-buyer.shophumm.com.au/assets/images/logos/text-logo.png</logo>
                 <portal>
                     <sandbox></sandbox>
                     <production></production>
@@ -197,7 +197,7 @@
                     <supported_currencies>AUD,NZD</supported_currencies>
                 </country_currency>
                 <api>
-                    <timeout>0</timeout>
+                    <timeout>120</timeout>
                 </api>
                 <debug>
                     <log_private_data_keys>ACCT,EXPDATE,CVV2,CARDISSUE,CARDSTART,CREDITCARDTYPE,USER,PWD,SIGNATURE

@@ -165,8 +165,8 @@ class Humm_Payments_PaymentController extends Mage_Core_Controller_Front_Action
                 "lastname" => $order->getCustomerLastname()
             ];
 
-            if (Mage::getStoreConfig('payment/humm_payments/api/timeout')) {
-                $timeOut = Mage::getStoreConfig('payment/humm_payments/api/timeout');
+            if (intval(Mage::getStoreConfig('payment/humm_payments/api/timeout'))) {
+                $timeOut = intval(Mage::getStoreConfig('payment/humm_payments/api/timeout'));
             } else {
                 $timeOut = 120;
             }

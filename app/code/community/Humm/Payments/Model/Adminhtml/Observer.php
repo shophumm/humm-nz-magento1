@@ -1,7 +1,7 @@
 <?php
-
-
-
+/**
+ * Class Humm_Payments_Model_Adminhtml_Observer
+ */
 class Humm_Payments_Model_Adminhtml_Observer
 {
 

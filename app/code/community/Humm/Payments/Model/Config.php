@@ -1,6 +1,8 @@
 <?php
 
-
+/**
+ * Class Humm_Payments_Model_Config
+ */
 class Humm_Payments_Model_Config
 {
     const VERSION = '2.0.0';

@@ -68,7 +68,6 @@ extends Mage_Adminhtml_Block_System_Config_Form_Fieldset
         $block->setData(
             array(
                 'version' => Mage::helper('humm_payments')->getCurrentVersion(),
-//                'logo' => Mage::helper('humm_payments')->getConfig()->getLogo(),
                 'logo'    => Mage::getDesign()->getSkinUrl( "images/Humm/bird-humm.svg" ),
                 'element' => $element,
                 'config' => $this->getGroup($element)->asArray()
