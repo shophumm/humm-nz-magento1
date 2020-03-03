@@ -5,6 +5,19 @@
             <version>2.0.0</version>
         </Humm_Payments>
     </modules>
+    <crontab>
+        <jobs>
+            <humm_payments>
+                <schedule>
+                    <cron_expr>* 0-23/2 * * *</cron_expr>
+                </schedule>
+                <run>
+                    <model>humm_payments/HummCron::execute</model>
+                </run>
+            </humm_payments>
+        </jobs>
+    </crontab>
+
 
     <global>
         <models>
