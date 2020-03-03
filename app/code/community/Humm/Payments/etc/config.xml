@@ -107,7 +107,10 @@
                 <model>humm_payments/Paymentmethod</model>
                 <environment>sandbox</environment>
                 <order_status>processing</order_status>
+                <pend_order>1</pend_order>
+                <pend_days>2</pend_days>
                 <sort_order>1</sort_order>
+                <force_humm>1</force_humm>
                 <country_currency>
                     <allow_specific_countries>1</allow_specific_countries>
                     <specific_countries>AU</specific_countries>

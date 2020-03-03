@@ -99,6 +99,7 @@
                                                 <show_in_default>1</show_in_default>
                                                 <show_in_website>1</show_in_website>
                                                 <show_in_store>1</show_in_store>
+
                                                 <sort_order>10</sort_order>
                                                 <fields>
                                                     <title translate="label">
@@ -136,6 +137,7 @@
                                                     </min_order_total>
                                                     <force_humm translate="label">
                                                         <label>Force Humm</label>
+                                                        <config_path>payment/humm_payments/force_humm</config_path>
                                                         <frontend_type>select</frontend_type>
                                                         <source_model>adminhtml/system_config_source_yesno</source_model>
                                                         <validate>required-entry</validate>
@@ -177,13 +179,36 @@
                                                         <sort_order>47</sort_order>
                                                         <tooltip>If disabled, online refunding in Magento with Humm will not be possible.</tooltip>
                                                     </automatic_invoice>
+                                                    <pend_order translate="label">
+                                                        <label>Pending Order Auto Clean</label>
+                                                        <config_path>payment/humm_payments/pend_order</config_path>
+                                                        <frontend_type>select</frontend_type>
+                                                        <source_model>adminhtml/system_config_source_yesno</source_model>
+                                                        <show_in_default>1</show_in_default>
+                                                        <show_in_website>1</show_in_website>
+                                                        <show_in_store>0</show_in_store>
+                                                        <sort_order>50</sort_order>
+                                                    </pend_order>
+
+                                                    <pend_days translate="label">
+                                                        <label>Pending Order Auto Clean Day(s)</label>
+                                                        <comment>It is recommended to set this value to 1 or 2 day(s), then clean humm pending orders repeatedly </comment>
+                                                        <config_path>payment/humm_payments/pend_days</config_path>
+                                                        <frontend_type>text</frontend_type>
+                                                        <frontend_class>validate-number</frontend_class>
+                                                        <show_in_default>1</show_in_default>
+                                                        <show_in_website>1</show_in_website>
+                                                        <show_in_store>0</show_in_store>
+                                                        <sort_order>51</sort_order>
+                                                    </pend_days>
+
                                                     <sort_order translate="label">
                                                         <label>Sort Order</label>
                                                         <tooltip>Give a number to define the position in payment option Humm Payment will be placed, 0 is the first position</tooltip>
                                                         <config_path>payment/humm_payments/sort_order</config_path>
                                                         <frontend_type>text</frontend_type>
                                                         <frontend_class>validate-number</frontend_class>
-                                                        <sort_order>50</sort_order>
+                                                        <sort_order>60</sort_order>
                                                         <show_in_default>1</show_in_default>
                                                         <show_in_website>1</show_in_website>
                                                         <show_in_store>1</show_in_store>
