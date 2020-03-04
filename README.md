@@ -45,7 +45,6 @@ in short, copy app and skin to the magento1 website same name folders
 
 New functions 
 
-
 1. Rebuild API call 
 2. Add product widget 
 3. Add cart widget
@@ -53,10 +52,16 @@ New functions
 5. Add API timeout configuration 
 6. Refund  function 
 7. Support NZ and AU stores 
-8. Force Humm function auto swift 
+8. Force Humm function auto swift from Oxipay to Humm
 9. Log file rebuild 
-10.dynamic widgets show position 
+10.dynamic widgets show position (TBC)
 11.remove unnecessary hardcoded
-12.redesign cancel order function
+12.redesign cancel order function (cancel order rolls back stock of inventory)
+13.add Humm orders menu in the admin panel -> sales-> humm orders, show order status changing history 
+14.add HummCron.php crontab modules to clean redundancy pending orders 
+15.clean span of days configure in the admin, enable/disable configure in the admin
+16.crontab time set in the config.xml default is  * 0-23/2 * * *
+
+
 
 
