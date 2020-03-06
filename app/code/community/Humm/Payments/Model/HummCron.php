@@ -2,7 +2,6 @@
 /**
  * Class Humm_Payments_Model_Config
  */
-
 class Humm_Payments_Model_HummCron
 {
     const Log_file = 'humm.log';

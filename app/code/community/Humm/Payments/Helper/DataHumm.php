@@ -48,7 +48,7 @@ class Humm_Payments_Helper_DataHumm extends Mage_Core_Helper_Abstract
         $launch_time_string = self::getLaunchDate();
         $is_after = (time() - strtotime($launch_time_string) >= 0) || Mage::getStoreConfig('payment/humm_payments/force_humm');
 
-        $checkCountry = Mage::getStoreConfig('payment/hunmm_payments/specificcountry');
+        $checkCountry = Mage::getStoreConfig('payment/humm_payments/country_currency/specific_countries');
 
         if ($checkCountry == 'NZ') {
             if ($is_after){
@@ -79,11 +79,8 @@ class Humm_Payments_Helper_DataHumm extends Mage_Core_Helper_Abstract
             $country_domain = $country == 'NZ' ? '.co.nz' : '.com.au';
 
             $isSandbox = Mage::getStoreConfig('payment/humm_payments/environment') == 'sandbox' ? 'sandboxURL' : 'liveURL';
-
             $checkoutUrl = 'https://' . self::URLS[$title][$isSandbox] . $country_domain . '/Checkout?platform=Default';
-
-            Mage::log($checkoutUrl,7,self::Log_file);
-
+            Mage::log(self::URLS[$title][$isSandbox],7,self::Log_file);
             return self::URLS[$title][$isSandbox];
         }
     }

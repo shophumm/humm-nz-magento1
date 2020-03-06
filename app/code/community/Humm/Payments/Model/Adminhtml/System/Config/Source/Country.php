@@ -1,4 +1,4 @@
-<?php
+ <?php
 
 
 
@@ -21,8 +21,8 @@ class Humm_Payments_Model_Adminhtml_System_Config_Source_Country extends Mage_Ad
                     return in_array($option['value'], $supportedCountries);
                 }
             );
-        }
 
+        }
         return $options;
 
     }

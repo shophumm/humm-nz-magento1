@@ -122,12 +122,8 @@ class Humm_Payments_PaymentController extends Mage_Core_Controller_Front_Action
     }
 
     /**
-     * Constructs a request payload to send to humm
-     *
      * @param $order
-     *
      * @return array
-     * @throws Mage_Core_Model_Store_Exception
      */
     private function getPayload($order)
     {
@@ -234,7 +230,7 @@ class Humm_Payments_PaymentController extends Mage_Core_Controller_Front_Action
                 $formItem = sprintf("%s %s", $formItem, sprintf("<input type='hidden' id='%s' name='%s' value='%s'/>", $key, $key, htmlspecialchars($value, ENT_QUOTES)));
             }
             $afterForm = sprintf("%s", '</form> </body> <script> var form = document.getElementById("form");form.submit();</script></html>');
-            $postForm  = sprintf("%s %s %s", $beforeForm, $formItem, $afterForm);
+            $postForm = sprintf("%s %s %s", $beforeForm, $formItem, $afterForm);
             Mage::log(sprintf("PostFormTemplate: %s", $postForm), 7, self::LOG_FILE);
             echo $postForm;
         } catch (Exception $e) {

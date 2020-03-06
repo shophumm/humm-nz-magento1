@@ -236,7 +236,7 @@
                                                     </allowspecific>
                                                     <specificcountry translate="label">
                                                         <label>Payment from Specific countries</label>
-                                                        <frontend_type>multiselect</frontend_type>
+                                                        <frontend_type>select</frontend_type>
                                                         <source_model>humm_payments/adminhtml_system_config_source_country</source_model>
                                                         <config_path>payment/humm_payments/country_currency/specific_countries</config_path>
                                                         <show_in_default>1</show_in_default>
@@ -249,7 +249,7 @@
                                                     </specificcountry>
                                                     <allowed_currencies translate="label">
                                                         <label>Allowed Currencies</label>
-                                                        <frontend_type>multiselect</frontend_type>
+                                                        <frontend_type>select</frontend_type>
                                                         <source_model>humm_payments/adminhtml_system_config_source_currency</source_model>
                                                         <config_path>payment/humm_payments/country_currency/allowed_currencies</config_path>
                                                         <show_in_default>1</show_in_default>
