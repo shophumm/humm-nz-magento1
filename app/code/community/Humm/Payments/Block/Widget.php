@@ -10,6 +10,7 @@ class Humm_Payments_Block_Widget extends Mage_Core_Block_Template
     const CONFIG_WIDGETS_ENABLED_PATH = 'payment/humm_payments/widgets/enabled';
     const CONFIG_WIDGETS_DEBUG_PATH = 'payment/humm_payments/widgets/debug';
     const CONFIG_WIDGETS_LIB_SCRIPT_PATH = 'payment/humm_payments/widgets/js_lib';
+    const CONFIG_SPECIFIC_COUNTRIES = 'payment/humm_payments/country_currency/specific_countries';
 
     const CONFIG_PUBLIC_KEY_PATH = 'payment/humm_payments/public_key';
     const CONFIG_ENVIRONMENT_PATH = 'payment/humm_payments/environment';
@@ -23,6 +24,14 @@ class Humm_Payments_Block_Widget extends Mage_Core_Block_Template
     protected $_config = null;
 
     /**
+     * get merchant id from public key
+     */
+    public function getMerchantId()
+    {
+        return $this->getConfig()->getValue(self::CONFIG_PUBLIC_KEY_PATH);
+    }
+
+    /**
      * @return null
      */
     public function getConfig()
@@ -32,14 +41,6 @@ class Humm_Payments_Block_Widget extends Mage_Core_Block_Template
         }
 
         return $this->_config;
-    }
-
-    /**
-     * get merchant id from public key
-     */
-    public function getMerchantId()
-    {
-        return $this->getConfig()->getValue(self::CONFIG_PUBLIC_KEY_PATH);
     }
 
     /**
@@ -98,47 +99,6 @@ class Humm_Payments_Block_Widget extends Mage_Core_Block_Template
     }
 
     /**
-     * @return null
-     */
-
-    protected function getProduct()
-    {
-        $productPrice = Mage::registry('current_product')->getPrice();
-        return isset($productPrice) ? $productPrice:null;
-    }
-
-    /**
-     * @return null
-     */
-
-    protected function getCart()
-    {
-        $cartAmount = Mage::getSingleton('checkout/session')->getQuote()->getGrandTotal();
-        return isset($cartAmount) ? $cartAmount:null;
-    }
-    /**
-     * get element selectors for current widgets
-     */
-    protected function getElementSelectors()
-    {
-        $selectors = array();
-        $helper = Mage::helper('humm_payments');
-
-        foreach ($this->_supportedWidgetTypes as $widgetType) {
-            $pageType = $this->getWidgetPageType();
-            $path = self::CONFIG_WIDGET_PATH_PREFIX . $pageType . '_page/' . $widgetType;
-            $enabled = $helper->getConfig()->getValue($path . '/enabled');
-
-            if ($enabled !== null && $enabled) {
-                $widgetType = $widgetType == 'widget' ? $pageType . '_' . $widgetType : $widgetType;
-                $selectors[$widgetType] = $helper->getConfig()->getValue($path . '/selector');
-            }
-        }
-
-        return $selectors;
-    }
-
-    /**
      * Returns the current page type.
      *
      * @return string
@@ -165,6 +125,57 @@ class Humm_Payments_Block_Widget extends Mage_Core_Block_Template
         }
 
         return null;
+    }
+
+    /**
+     * @return null
+     */
+
+    protected function getProduct()
+    {
+        $productPrice = Mage::registry('current_product')->getPrice();
+        return isset($productPrice) ? $productPrice : null;
+    }
+
+    /**
+     * @return null
+     */
+
+    protected function getCart()
+    {
+        $cartAmount = Mage::getSingleton('checkout/session')->getQuote()->getGrandTotal();
+        return isset($cartAmount) ? $cartAmount : null;
+    }
+
+    /**
+     * get element selectors for current widgets
+     */
+    protected function getElementSelectors()
+    {
+        $selectors = array();
+        $helper = Mage::helper('humm_payments');
+
+        foreach ($this->_supportedWidgetTypes as $widgetType) {
+            $pageType = $this->getWidgetPageType();
+            $path = self::CONFIG_WIDGET_PATH_PREFIX . $pageType . '_page/' . $widgetType;
+            $enabled = $helper->getConfig()->getValue($path . '/enabled');
+
+            if ($enabled !== null && $enabled) {
+                $widgetType = $widgetType == 'widget' ? $pageType . '_' . $widgetType : $widgetType;
+                $selectors[$widgetType] = $helper->getConfig()->getValue($path . '/selector');
+            }
+        }
+
+        return $selectors;
+    }
+
+    /**
+     * @return mixed
+     */
+    protected function getCountry()
+    {
+
+        return $this->getConfig()->getValue(self::CONFIG_SPECIFIC_COUNTRIES);
     }
 
 
