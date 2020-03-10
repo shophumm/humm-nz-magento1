@@ -28,7 +28,7 @@ if ($country == "NZ") {
         }
         else
         {
-            $ec_pattern = sprintf("%s%s%s%s", '<script src= "https://widgets.shophumm.co.nz/content/scripts/price-info.js?productPrice=', $productPrice, '&big=M6', '"></script>');
+            $ec_pattern = sprintf("%s%s%s%s", '<script src= "https://widgets.shophumm.co.nz/content/scripts/price-info.js?productPrice=', $productPrice, '&big=M6', '&element=%23product-options-wrapper"></script>');
             $ec_pattern = $ec_pattern . sprintf("%s%s%s%s", '<script src= "https://widgets.shophumm.co.nz/content/scripts/price-info.js?productPrice=', $productPrice, '&big=M9', '&element=%23product-options-wrapper"></script>');
             $ec_pattern = $ec_pattern . sprintf("%s%s%s%s", '<script src= "https://widgets.shophumm.co.nz/content/scripts/price-info.js?productPrice=', $productPrice, '&big=M12', '&element=%23product-options-wrapper"></script>');
             $ec_pattern = $ec_pattern . sprintf("%s%s%s%s", '<script src= "https://widgets.shophumm.co.nz/content/scripts/price-info.js?productPrice=', $productPrice, '&big=M18', '&element=%23product-options-wrapper"></script>');
