@@ -46,7 +46,12 @@ class Humm_Payments_Helper_DataHumm extends Mage_Core_Helper_Abstract
     public static function getTitle()
     {
         $launch_time_string = self::getLaunchDate();
-        $is_after = (time() - strtotime($launch_time_string) >= 0) || Mage::getStoreConfig('payment/humm_payments/force_humm');
+        if ($launch_time_string) {
+            $is_after = (time() - strtotime($launch_time_string) >= 0) || Mage::getStoreConfig('payment/humm_payments/force_humm');
+        }
+        else {
+            $is_after = true;
+        }
 
         $checkCountry = Mage::getStoreConfig('payment/humm_payments/country_currency/specific_countries');
 
