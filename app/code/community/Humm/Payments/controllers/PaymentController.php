@@ -401,9 +401,22 @@ class Humm_Payments_PaymentController extends Mage_Core_Controller_Front_Action
         $result = $this->getRequest()->get("x_result");
         $orderId = $this->getRequest()->get("x_reference");
         $transactionId = $this->getRequest()->get("x_gateway_reference");
+        $merchantNoHumm = $this->getRequest()->get('x_account_id');
+        $orderDue = $this->getRequest()->get('x_amount');
         Mage::log(sprintf("[Response---:%s] [method = %s]", json_encode($this->getRequest()->getParams()), $this->getRequest()->getMethod()), 7, self::LOG_FILE);
 
+        $order = $this->getOrderById($orderId);
+        $merchantNo = Mage::getStoreConfig('payment/humm_payments/public_key');
+        $mesg = sprintf("Order Amount: Humm %s  web %s | %s H<-MerchantNo->W %s |[Response---%s] [method--%s]", $orderDue,$order->getTotalDue(),$merchantNoHumm,$merchantNo,json_encode($this->getRequest()->getParams()), $this->getRequest()->getMethod());
+        Mage::log($mesg,7,self::LOG_FILE);
+        $msgIP = Mage::helper('core/http')->getRemoteAddr();
+        Mage::log("IP:".$msgIP,7,self::LOG_FILE);
 
+
+        if ( ($merchantNoHumm != $merchantNo) || ($orderDue != $order->getTotalDue()))
+        {
+            Mage::throwException($mesg);
+        }
         if (!$isValid) {
             Mage::log('Possible site forgery detected: invalid response signature.', Zend_Log::ALERT, self::LOG_FILE);
             $this->_redirect('checkout/onepage/error', array('_secure' => false));
@@ -416,7 +429,6 @@ class Humm_Payments_PaymentController extends Mage_Core_Controller_Front_Action
             return;
         }
 
-        $order = $this->getOrderById($orderId);
         $isFromAsyncCallback = (strtoupper($this->getRequest()->getMethod() == "POST")) ? true : false;
 
         if (!$order) {
@@ -428,96 +440,7 @@ class Humm_Payments_PaymentController extends Mage_Core_Controller_Front_Action
             Mage::log("The instance of order returned is an unexpected type.", Zend_Log::ERR, self::LOG_FILE);
         }
 
-        $resource = Mage::getSingleton('core/resource');
-        $write = $resource->getConnection('core_write');
-        $table = $resource->getTableName('sales/order');
-
-        try {
-            $write->beginTransaction();
-            $select = $write->select()
-                ->forUpdate()
-                ->from(array('t' => $table),
-                    array('state', 'status'))
-                ->where('increment_id = ?', $orderId);
-            $state_and_status = $write->fetchRow($select);
-            $state = $state_and_status['state'];
-            $status = $state_and_status['status'];
-
-            if ($state === Mage_Sales_Model_Order::STATE_NEW) {
-                $whereQuery = array('increment_id = ?' => $orderId);
-                if ($result == "completed") {
-                    $dataQuery = array('state' => Mage_Sales_Model_Order::STATE_PROCESSING);
-                } else {
-                    $dataQuery = array('state' => Mage_Sales_Model_Order::STATE_CANCELED);
-                }
-                $write->update($table, $dataQuery, $whereQuery);
-            } elseif ($status === Humm_Payments_Helper_OrderStatus::STATUS_CANCELED && $result == "completed") {
-                $whereQuery = array('increment_id = ?' => $orderId);
-                $dataQuery = array('state' => Mage_Sales_Model_Order::STATE_PROCESSING);
-                $write->update($table, $dataQuery, $whereQuery);
-            } else {
-                $write->commit();
-                $this->sendResponse($isFromAsyncCallback, $result, $state, $orderId);
-                return;
-            }
-            $write->commit();
-        } catch (Exception $e) {
-            $write->rollback();
-            Mage::log("Transaction failed. Order status not updated", Zend_Log::ERR, self::LOG_FILE);
-            $this->_redirect('checkout/onepage/error', array('_secure' => false));
-            return;
-        }
-
         if ($result == "completed") {
-            if ($status === Humm_Payments_Helper_OrderStatus::STATUS_CANCELED) {
-                $order->setState(Mage_Sales_Model_Order::STATE_NEW, true, 'Order uncancelled by humm.', false);
-                $order->setBaseDiscountCanceled(0);
-                $order->setBaseShippingCanceled(0);
-                $order->setBaseSubtotalCanceled(0);
-                $order->setBaseTaxCanceled(0);
-                $order->setBaseTotalCanceled(0);
-                $order->setDiscountCanceled(0);
-                $order->setShippingCanceled(0);
-                $order->setSubtotalCanceled(0);
-                $order->setTaxCanceled(0);
-                $order->setTotalCanceled(0);
-                $stockItems = [];
-                $productIds = [];
-
-                foreach ($order->getAllItems() as $item) {
-                    /** @var $item Mage_Sales_Model_Order_Item */
-                    $item->setQtyCanceled(0);
-                    $item->setTaxCanceled(0);
-                    $item->setHiddenTaxCanceled(0);
-                    $item->save();
-                    $stockItems[$item->getProductId()] = ['qty' => $item->getQtyOrdered()];
-                    $productIds[$item->getProductId()] = $item->getProductId();
-                    $children = $item->getChildrenItems();
-                    if ($children) {
-                        foreach ($children as $childItem) {
-                            $productIds[$childItem->getProductId()] = $childItem->getProductId();
-                        }
-                    }
-                }
-
-                $stockModel = Mage::getSingleton('cataloginventory/stock');
-                $itemsForReindex = $stockModel->registerProductsSale($stockItems);
-
-                if (count($productIds)) {
-                    Mage::getResourceSingleton('cataloginventory/indexer_stock')->reindexProducts($productIds);
-                }
-
-                $stockProductIds = array();
-                foreach ($itemsForReindex as $item) {
-                    $item->save();
-                    $stockProductIds[] = $item->getProductId();
-                }
-                if (count($stockProductIds)) {
-                    Mage::getResourceSingleton('catalog/product_indexer_price')->reindexProductIds($stockProductIds);
-                }
-                $order->save();
-            }
-
             $orderState = Mage_Sales_Model_Order::STATE_PROCESSING;
             $orderStatus = Mage::getStoreConfig('payment/humm_payments/humm_approved_order_status');
             $emailCustomer = Mage::getStoreConfig('payment/humm_payments/email_customer');
@@ -542,16 +465,6 @@ class Humm_Payments_PaymentController extends Mage_Core_Controller_Front_Action
             if ($invoiceAutomatically) {
                 $this->invoiceOrder($order);
             }
-        } else {
-            $order->addStatusHistoryComment($this->__("Order #" . ($order->getId()) . " was declined by humm. Transaction #$transactionId."));
-            $order
-                ->cancel()
-                ->setStatus(Humm_Payments_Helper_OrderStatus::STATUS_DECLINED)
-                ->addStatusHistoryComment($this->__("Order #" . ($order->getId()) . " was canceled by customer."));
-
-            $order->save();
-            // $this->restoreCart($order, true);
-            $this->restoreCart($order);
         }
         Mage::getSingleton('checkout/session')->unsQuoteId();
         $this->sendResponse($isFromAsyncCallback, $result, $order->getState(), $orderId);
