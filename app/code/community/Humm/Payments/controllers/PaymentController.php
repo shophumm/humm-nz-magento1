@@ -174,7 +174,7 @@ class Humm_Payments_PaymentController extends Mage_Core_Controller_Front_Action
                 'x_url_cancel' => str_replace(PHP_EOL, ' ', Humm_Payments_Helper_DataHumm::getCancelledUrl($orderId) . "&signature=" . $cancel_signature),
                 'x_shop_name' => str_replace(PHP_EOL, ' ', Mage::app()->getStore()->getCode()),
                 'x_account_id' => str_replace(PHP_EOL, ' ', Mage::getStoreConfig('payment/humm_payments/public_key')),
-                'x_reference' => str_replace(PHP_EOL, ' ', $orderId),
+                'x_reference' => str_replace( PHP_EOL, ' ', $orderId ),
                 'x_invoice' => str_replace(PHP_EOL, ' ', $orderId),
                 'x_amount' => str_replace(PHP_EOL, ' ', $order->getTotalDue()),
                 'x_customer_first_name' => str_replace(PHP_EOL, ' ', $order->getCustomerFirstname()),
@@ -201,6 +201,7 @@ class Humm_Payments_PaymentController extends Mage_Core_Controller_Front_Action
             $signature = Humm_Payments_Helper_Crypto::generateSignature($data, $apiKey);
             $data['x_signature'] = $signature;
             Mage::log("send-data.." . $data['x_reference'], 7, self::LOG_FILE);
+            Mage::log("Protect-code.." . $order->getProtectCode(), 7, self::LOG_FILE);
             return $data;
         } catch (Mage_Core_Model_Store_Exception $e) {
             Mage::log(sprintf("Payload error%s OrderId %s", $e->getMessage(), $order->getRealOrderId()), 7, self::LOG_FILE);
@@ -399,23 +400,24 @@ class Humm_Payments_PaymentController extends Mage_Core_Controller_Front_Action
     {
         $isValid = Humm_Payments_Helper_Crypto::isValidSignature($this->getRequest()->getParams(), Mage::helper('core')->decrypt($this->getApiKey()));
         $result = $this->getRequest()->get("x_result");
-        $orderId = $this->getRequest()->get("x_reference");
+        $orderId       = $this->getRequest()->get( "x_reference" );
         $transactionId = $this->getRequest()->get("x_gateway_reference");
         $merchantNoHumm = $this->getRequest()->get('x_account_id');
         $orderDue = $this->getRequest()->get('x_amount');
-        Mage::log(sprintf("[Response---:%s] [method = %s]", json_encode($this->getRequest()->getParams()), $this->getRequest()->getMethod()), 7, self::LOG_FILE);
+        Mage::log(sprintf("End Response: [Response---:%s] [method = %s]", json_encode($this->getRequest()->getParams()), $this->getRequest()->getMethod()), 7, self::LOG_FILE);
 
         $order = $this->getOrderById($orderId);
         $merchantNo = Mage::getStoreConfig('payment/humm_payments/public_key');
-        $mesg = sprintf("Order Amount: Humm %s  web %s | %s H<-MerchantNo->W %s |[Response---%s] [method--%s]", $orderDue,$order->getTotalDue(),$merchantNoHumm,$merchantNo,json_encode($this->getRequest()->getParams()), $this->getRequest()->getMethod());
+        $mesg = sprintf("Merchant No:%s  Web  %s |[Response---%s] [method--%s]",$merchantNoHumm,$merchantNo,json_encode($this->getRequest()->getParams()), $this->getRequest()->getMethod());
         Mage::log($mesg,7,self::LOG_FILE);
         $msgIP = Mage::helper('core/http')->getRemoteAddr();
         Mage::log("IP:".$msgIP,7,self::LOG_FILE);
-
-
-        if ( ($merchantNoHumm != $merchantNo) || ($orderDue != $order->getTotalDue()))
+        if ( ($merchantNoHumm != $merchantNo) )
         {
-            Mage::throwException($mesg);
+            $mesg = sprintf("Order ProtectCode ERROR: Merchant No:%s  Web  %s |[Response---%s] [method--%s]",$merchantNoHumm,$merchantNo,json_encode($this->getRequest()->getParams()), $this->getRequest()->getMethod());
+            Mage::log($mesg,7,self::LOG_FILE);
+            $this->_redirect('checkout/onepage/error', array('_secure' => false));
+            return;
         }
         if (!$isValid) {
             Mage::log('Possible site forgery detected: invalid response signature.', Zend_Log::ALERT, self::LOG_FILE);
@@ -442,7 +444,7 @@ class Humm_Payments_PaymentController extends Mage_Core_Controller_Front_Action
 
         if ($result == "completed") {
             $orderState = Mage_Sales_Model_Order::STATE_PROCESSING;
-            $orderStatus = Mage::getStoreConfig('payment/humm_payments/humm_approved_order_status');
+            $orderStatus = Mage::getStoreConfig('payment/humm_payments/order_status');
             $emailCustomer = Mage::getStoreConfig('payment/humm_payments/email_customer');
             if (!$this->statusExists($orderStatus)) {
                 $orderStatus = $order->getConfig()->getStateDefaultStatus($orderState);
@@ -467,6 +469,7 @@ class Humm_Payments_PaymentController extends Mage_Core_Controller_Front_Action
             }
         }
         Mage::getSingleton('checkout/session')->unsQuoteId();
+        Mage::log("End Transaction",7,self::LOG_FILE);
         $this->sendResponse($isFromAsyncCallback, $result, $order->getState(), $orderId);
         return;
     }
@@ -515,8 +518,10 @@ class Humm_Payments_PaymentController extends Mage_Core_Controller_Front_Action
     private function invoiceOrder(Mage_Sales_Model_Order $order)
     {
 
+        $order->setActionFlag(Mage_Sales_Model_Order::ACTION_FLAG_HOLD, false);
         if (!$order->canInvoice()) {
-            Mage::throwException(Mage::helper('core')->__('Cannot create an invoice.'));
+            $order->addStatusHistoryComment('Order cannot be invoiced.', false);
+            $order->save();
         }
 
         $invoice = Mage::getModel('sales/service_order', $order)->prepareInvoice();

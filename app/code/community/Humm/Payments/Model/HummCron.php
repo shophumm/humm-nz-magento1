@@ -6,11 +6,11 @@ class Humm_Payments_Model_HummCron
 {
     const Log_file = 'humm.log';
     const paymentMethod = 'humm';
-    const statuses = ['pending'];
 
     public function execute()
     {
         $yesNo = intval(Mage::getStoreConfig('payment/humm_payments/pend_order'));
+
         if (!intval($yesNo)) {
             Mage::log("Clean Pend Order in Crontab Disable", 7, self::Log_file);
             return $this;
@@ -34,13 +34,19 @@ class Humm_Payments_Model_HummCron
      */
     protected function _prepareCollection($from, $to)
     {
+        $orderStatus = Mage::getStoreConfig('payment/humm_payments/order_status');
+
+        if (!$orderStatus) {
+            $orderStatus = "processing";
+        }
+        $hummStatus = [$orderStatus,'canceled'];
         $collection = Mage::getResourceModel($this->_getCollectionClass());
         $collection->addFieldToSelect('*')
             ->addFieldToFilter('created_at', ['gteq' => $from])
             ->addFieldToFilter('created_at',
                 ['lteq' => $to]
             )
-            ->addFieldToFilter('status', ['in' => self::statuses]);
+            ->addFieldToFilter('status', ['nin' => $hummStatus]);
 
         $collection->getSelect()
             ->join(
