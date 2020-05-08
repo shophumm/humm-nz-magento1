@@ -35,18 +35,18 @@ class Humm_Payments_Model_HummCron
     protected function _prepareCollection($from, $to)
     {
         $orderStatus = Mage::getStoreConfig('payment/humm_payments/order_status');
-
         if (!$orderStatus) {
             $orderStatus = "processing";
         }
-        $hummStatus = [$orderStatus,'canceled'];
+        $hummStatus = ['hummpending'];
+        $hummFinish = [ Mage_Sales_Model_Order::STATE_PROCESSING ];
         $collection = Mage::getResourceModel($this->_getCollectionClass());
         $collection->addFieldToSelect('*')
             ->addFieldToFilter('created_at', ['gteq' => $from])
             ->addFieldToFilter('created_at',
                 ['lteq' => $to]
             )
-            ->addFieldToFilter('status', ['nin' => $hummStatus]);
+            ->addFieldToFilter('status', ['in'  => $hummStatus]);
 
         $collection->getSelect()
             ->join(
@@ -106,41 +106,6 @@ class Humm_Payments_Model_HummCron
 
         }
         Mage::log($message,7,self::Log_file);
-    }
-
-    /**
-     * @param null $paymentMethod
-     * @param $from
-     * @param $to
-     * @return $this
-     */
-    public function getOrderCollectionPaymentMethod($paymentMethod = null, $from, $to)
-    {
-        $collection = $this->_orderCollectionFactory->create()
-            ->addFieldToSelect('*')
-            ->addFieldToFilter('created_at',
-                ['gteq' => $from]
-            )
-            ->addFieldToFilter('created_at',
-                ['lteq' => $to]
-            )
-            ->addFieldToFilter('status', ['in' => self::statuses]);
-
-        $collection->getSelect()
-            ->join(
-                ["sop" => "sales_order_payment"],
-                'main_table.entity_id = sop.parent_id',
-                array('method', 'amount_paid', 'amount_ordered')
-            )
-            ->where('sop.method like "%humm%" and sop.amount_paid is NULL');
-
-        $collection->setOrder(
-            'created_at',
-            'desc'
-        );
-
-        return $collection;
-
     }
 
     /**

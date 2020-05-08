@@ -34,9 +34,10 @@ class Humm_Payments_PaymentController extends Mage_Core_Controller_Front_Action
                     $this->_redirect('checkout/cart');
                     return;
                 }
-                $order->setState(Mage_Sales_Model_Order::STATE_NEW, true, 'Humm_authorisation');
-                $orderStatus = $order->getConfig()->getStateDefaultStatus(Mage_Sales_Model_Order::STATE_NEW);
-                $order->setStatus($orderStatus);
+                $orderStatusPender = 'hummpending';
+                $order->setState(Mage_Sales_Model_Order::STATE_NEW, $orderStatusPender, 'Humm_authorisation start');
+//              $orderStatus = $order->getConfig()->getStateDefaultStatus(Mage_Sales_Model_Order::STATE_NEW);
+                $order->setStatus($orderStatusPender);
                 $order->save();
                 $this->postToCheckoutTemplate(Humm_Payments_Helper_DataHumm::getCheckoutUrl(), $payload);
             } catch (Exception $ex) {
@@ -46,11 +47,9 @@ class Humm_Payments_PaymentController extends Mage_Core_Controller_Front_Action
             }
         } else {
             Mage::log('An exception was encountered in humm_payments/paymentcontroller: ', Zend_Log::ERR, self::LOG_FILE);
-            $this->restoreCart($this->getLastRealOrder());
+            $order = $this->getLastRealOrder();
+            $this->cancelOrder($order);
             $this->_redirect('checkout/cart');
-//            $order = $this->getLastRealOrder();
-//            $this->cancelOrder($order);
-//            Mage::getResourceSingleton('sales/order')->delete($order);
         }
     }
 
