@@ -36,7 +36,6 @@ class Humm_Payments_PaymentController extends Mage_Core_Controller_Front_Action
                 }
                 $orderStatusPender = 'hummpending';
                 $order->setState(Mage_Sales_Model_Order::STATE_NEW, $orderStatusPender, 'Humm_authorisation start');
-//              $orderStatus = $order->getConfig()->getStateDefaultStatus(Mage_Sales_Model_Order::STATE_NEW);
                 $order->setStatus($orderStatusPender);
                 $order->save();
                 $this->postToCheckoutTemplate(Humm_Payments_Helper_DataHumm::getCheckoutUrl(), $payload);
