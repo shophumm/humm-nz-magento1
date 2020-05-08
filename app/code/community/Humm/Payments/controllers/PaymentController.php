@@ -45,11 +45,12 @@ class Humm_Payments_PaymentController extends Mage_Core_Controller_Front_Action
                 $this->getCheckoutSession()->addError($this->__('Unable to start humm Checkout.'));
             }
         } else {
+            Mage::log('An exception was encountered in humm_payments/paymentcontroller: ', Zend_Log::ERR, self::LOG_FILE);
             $this->restoreCart($this->getLastRealOrder());
             $this->_redirect('checkout/cart');
-            $order = $this->getLastRealOrder();
-            $this->cancelOrder($order);
-            Mage::getResourceSingleton('sales/order')->delete($order);
+//            $order = $this->getLastRealOrder();
+//            $this->cancelOrder($order);
+//            Mage::getResourceSingleton('sales/order')->delete($order);
         }
     }
 
@@ -166,7 +167,8 @@ class Humm_Payments_PaymentController extends Mage_Core_Controller_Front_Action
             } else {
                 $timeOut = 120;
             }
-            $cancel_signature = Humm_Payments_Helper_Crypto::generateSignature($cancel_signature_query, $this->getApiKey());
+            $apiKey = Mage::helper('core')->decrypt($this->getApiKey());
+            $cancel_signature = Humm_Payments_Helper_Crypto::generateSignature($cancel_signature_query, $apiKey);
             $data = array(
                 'x_currency' => str_replace(PHP_EOL, ' ', $order->getOrderCurrencyCode()),
                 'x_url_callback' => str_replace(PHP_EOL, ' ', Humm_Payments_Helper_DataHumm::getCompleteUrl()),
@@ -174,7 +176,7 @@ class Humm_Payments_PaymentController extends Mage_Core_Controller_Front_Action
                 'x_url_cancel' => str_replace(PHP_EOL, ' ', Humm_Payments_Helper_DataHumm::getCancelledUrl($orderId) . "&signature=" . $cancel_signature),
                 'x_shop_name' => str_replace(PHP_EOL, ' ', Mage::app()->getStore()->getCode()),
                 'x_account_id' => str_replace(PHP_EOL, ' ', Mage::getStoreConfig('payment/humm_payments/public_key')),
-                'x_reference' => str_replace( PHP_EOL, ' ', $orderId ),
+                'x_reference' => str_replace(PHP_EOL, ' ', $orderId),
                 'x_invoice' => str_replace(PHP_EOL, ' ', $orderId),
                 'x_amount' => str_replace(PHP_EOL, ' ', $order->getTotalDue()),
                 'x_customer_first_name' => str_replace(PHP_EOL, ' ', $order->getCustomerFirstname()),
@@ -197,10 +199,9 @@ class Humm_Payments_PaymentController extends Mage_Core_Controller_Front_Action
             if (!Mage::getStoreConfigFlag('payment/humm_payments/hide_versions')) {
                 $data['version_info'] = 'Humm_' . (string)Mage::getConfig()->getNode()->modules->Humm_Payments->version . '_on_magento' . substr(Mage::getVersion(), 0, 4);
             }
-            $apiKey = Mage::helper('core')->decrypt($this->getApiKey());
             $signature = Humm_Payments_Helper_Crypto::generateSignature($data, $apiKey);
             $data['x_signature'] = $signature;
-            Mage::log("send-data.." . $data['x_reference'], 7, self::LOG_FILE);
+            Mage::log("Start send-data.." . $data['x_reference'], 7, self::LOG_FILE);
             Mage::log("Protect-code.." . $order->getProtectCode(), 7, self::LOG_FILE);
             return $data;
         } catch (Mage_Core_Model_Store_Exception $e) {
@@ -365,6 +366,7 @@ class Humm_Payments_PaymentController extends Mage_Core_Controller_Front_Action
     {
         $orderId = $this->getRequest()->get('orderId');
         $order = $this->getOrderById($orderId);
+        $apiKey = Mage::helper('core')->decrypt($this->getApiKey());
 
         if ($order && $order->getId()) {
             $cancel_signature_query = [
@@ -374,12 +376,11 @@ class Humm_Payments_PaymentController extends Mage_Core_Controller_Front_Action
                 "firstname" => $order->getCustomerFirstname(),
                 "lastname" => $order->getCustomerLastname()
             ];
-            $cancel_signature = Humm_Payments_Helper_Crypto::generateSignature($cancel_signature_query, $this->getApiKey());
+            $cancel_signature = Humm_Payments_Helper_Crypto::generateSignature($cancel_signature_query, $apiKey);
             $signatureValid = ($this->getRequest()->get('signature') == $cancel_signature);
             if (!$signatureValid) {
                 Mage::log('Possible site forgery detected: invalid response signature.', Zend_Log::ALERT, self::LOG_FILE);
                 $this->_redirect('checkout/onepage/error', array('_secure' => false));
-
                 return;
             }
             Mage::log(
@@ -400,7 +401,7 @@ class Humm_Payments_PaymentController extends Mage_Core_Controller_Front_Action
     {
         $isValid = Humm_Payments_Helper_Crypto::isValidSignature($this->getRequest()->getParams(), Mage::helper('core')->decrypt($this->getApiKey()));
         $result = $this->getRequest()->get("x_result");
-        $orderId       = $this->getRequest()->get( "x_reference" );
+        $orderId = $this->getRequest()->get("x_reference");
         $transactionId = $this->getRequest()->get("x_gateway_reference");
         $merchantNoHumm = $this->getRequest()->get('x_account_id');
         $orderDue = $this->getRequest()->get('x_amount');
@@ -408,14 +409,13 @@ class Humm_Payments_PaymentController extends Mage_Core_Controller_Front_Action
 
         $order = $this->getOrderById($orderId);
         $merchantNo = Mage::getStoreConfig('payment/humm_payments/public_key');
-        $mesg = sprintf("Merchant No:%s  Web  %s |[Response---%s] [method--%s]",$merchantNoHumm,$merchantNo,json_encode($this->getRequest()->getParams()), $this->getRequest()->getMethod());
-        Mage::log($mesg,7,self::LOG_FILE);
+        $mesg = sprintf("Merchant No:%s  Web  %s |[Response---%s] [method--%s]", $merchantNoHumm, $merchantNo, json_encode($this->getRequest()->getParams()), $this->getRequest()->getMethod());
+        Mage::log($mesg, 7, self::LOG_FILE);
         $msgIP = Mage::helper('core/http')->getRemoteAddr();
-        Mage::log("IP:".$msgIP,7,self::LOG_FILE);
-        if ( ($merchantNoHumm != $merchantNo) )
-        {
-            $mesg = sprintf("Order ProtectCode ERROR: Merchant No:%s  Web  %s |[Response---%s] [method--%s]",$merchantNoHumm,$merchantNo,json_encode($this->getRequest()->getParams()), $this->getRequest()->getMethod());
-            Mage::log($mesg,7,self::LOG_FILE);
+        Mage::log("IP:" . $msgIP, 7, self::LOG_FILE);
+        if (($merchantNoHumm != $merchantNo)) {
+            $mesg = sprintf("Order ProtectCode ERROR: Merchant No:%s  Web  %s |[Response---%s] [method--%s]", $merchantNoHumm, $merchantNo, json_encode($this->getRequest()->getParams()), $this->getRequest()->getMethod());
+            Mage::log($mesg, 7, self::LOG_FILE);
             $this->_redirect('checkout/onepage/error', array('_secure' => false));
             return;
         }
@@ -469,27 +469,8 @@ class Humm_Payments_PaymentController extends Mage_Core_Controller_Front_Action
             }
         }
         Mage::getSingleton('checkout/session')->unsQuoteId();
-        Mage::log("End Transaction",7,self::LOG_FILE);
+        Mage::log("End Transaction", 7, self::LOG_FILE);
         $this->sendResponse($isFromAsyncCallback, $result, $order->getState(), $orderId);
-        return;
-    }
-
-    private function sendResponse($isFromAsyncCallback, $result, $state, $orderId)
-    {
-        if ($isFromAsyncCallback) {
-            // if from POST request (from asynccallback)
-            $jsonData = json_encode(["result" => $state, "order_id" => $orderId]);
-            $this->getResponse()->setHeader('Content-type', 'application/json');
-            $this->getResponse()->setBody($jsonData);
-        } else {
-            // if from GET request (from browser redirect)
-            if ($result == "completed") {
-                $this->_redirect('checkout/onepage/success', array('_secure' => false));
-            } else {
-                $this->_redirect('checkout/onepage/failure', array('_secure' => false));
-            }
-        }
-
         return;
     }
 
@@ -538,5 +519,24 @@ class Humm_Payments_PaymentController extends Mage_Core_Controller_Front_Action
             ->addObject($invoice->getOrder());
 
         $transactionSave->save();
+    }
+
+    private function sendResponse($isFromAsyncCallback, $result, $state, $orderId)
+    {
+        if ($isFromAsyncCallback) {
+            // if from POST request (from asynccallback)
+            $jsonData = json_encode(["result" => $state, "order_id" => $orderId]);
+            $this->getResponse()->setHeader('Content-type', 'application/json');
+            $this->getResponse()->setBody($jsonData);
+        } else {
+            // if from GET request (from browser redirect)
+            if ($result == "completed") {
+                $this->_redirect('checkout/onepage/success', array('_secure' => false));
+            } else {
+                $this->_redirect('checkout/onepage/failure', array('_secure' => false));
+            }
+        }
+
+        return;
     }
 }
