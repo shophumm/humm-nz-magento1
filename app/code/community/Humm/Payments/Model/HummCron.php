@@ -12,8 +12,8 @@ class Humm_Payments_Model_HummCron
         $yesNo = intval(Mage::getStoreConfig('payment/humm_payments/pend_order'));
 
         if (!intval($yesNo)) {
-            Mage::log("Clean Pend Order in Crontab Disable", 7, self::Log_file);
-            return $this;
+             Mage::log("Clean Pend Order in Crontab Disable", 7, self::Log_file);
+             return $this;
         }
         $daysSkip = intval(Mage::getStoreConfig('payment/humm_payments/pend_days'));
         $time = Mage::getModel('core/date')->timestamp(time());
@@ -97,7 +97,7 @@ class Humm_Payments_Model_HummCron
 
         try {
             $hummOrder = Mage::getModel('sales/order')->loadByIncrementId($hummOrderId);
-            if ($hummOrder->getId() && $hummOrder->getStatus() != $hummOrder::STATE_CANCELED) {
+            if ($hummOrder->getIncrementId() && $hummOrder->getStatus() != $hummOrder::STATE_CANCELED && $hummOrder->getStatus() == "hummpending") {
                 $hummOrder->registerCancellation('cancelled by customer Cron Humm Payment ')->save();
             }
             $message = sprintf("OrderId %s is cancelled",$hummOrderId);
