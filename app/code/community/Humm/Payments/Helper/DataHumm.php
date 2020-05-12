@@ -139,7 +139,7 @@ class Humm_Payments_Helper_DataHumm extends Mage_Core_Helper_Abstract
             Mage::log(sprintf("Get ForceHumm %s Url Wrong %s", self::LAUNCH_TIME_URL, $exception->getMessage()), 4, self::Log_file);
             return false;
         }
-        return strtotime($remote_launch_time_string)>= strtotime(LAUNCH_TIME_DEFAULT) ? strtotime($remote_launch_time_string):strtotime(LAUNCH_TIME_DEFAULT);
+        return strtotime($remote_launch_time_string)>= strtotime(self::LAUNCH_TIME_DEFAULT) ? strtotime($remote_launch_time_string):strtotime(self::LAUNCH_TIME_DEFAULT);
     }
 }
 
