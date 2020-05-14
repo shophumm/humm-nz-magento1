@@ -169,7 +169,7 @@ class Humm_Payments_PaymentController extends Mage_Core_Controller_Front_Action
             $cancel_signature = Humm_Payments_Helper_Crypto::generateSignature($cancel_signature_query, $apiKey);
             $data = array(
                 'x_currency' => str_replace(PHP_EOL, ' ', $order->getOrderCurrencyCode()),
-                'x_url_callback' => str_replace(PHP_EOL, ' ', Humm_Payments_Helper_DataHumm::getCompleteUrl()),
+//               'x_url_callback' => str_replace(PHP_EOL, ' ', Humm_Payments_Helper_DataHumm::getCompleteUrl()),
                 'x_url_complete' => str_replace(PHP_EOL, ' ', Humm_Payments_Helper_DataHumm::getCompleteUrl()),
                 'x_url_cancel' => str_replace(PHP_EOL, ' ', Humm_Payments_Helper_DataHumm::getCancelledUrl($orderId) . "&signature=" . $cancel_signature),
                 'x_shop_name' => str_replace(PHP_EOL, ' ', Mage::app()->getStore()->getCode()),
@@ -381,6 +381,7 @@ class Humm_Payments_PaymentController extends Mage_Core_Controller_Front_Action
                 $this->_redirect('checkout/onepage/error', array('_secure' => false));
                 return;
             }
+
             Mage::log(
                 'Requested order cancellation by customer from Humm_payment. OrderId: ' . $order->getIncrementId(),
                 Zend_Log::DEBUG,
