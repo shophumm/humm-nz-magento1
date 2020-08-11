@@ -21,7 +21,8 @@ Copy follow files
 
 To conclude,copy app and skin to the same name folders of magento1 website
 
-New functions 
+
+New functions for Humm-NZ
 
 1. Rebuild API call 
 2. Add product widget 
