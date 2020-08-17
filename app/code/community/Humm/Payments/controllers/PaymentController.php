@@ -45,7 +45,7 @@ class Humm_Payments_PaymentController extends Mage_Core_Controller_Front_Action
                 $this->getCheckoutSession()->addError($this->__('Unable to start humm Checkout.'));
             }
         } else {
-            Mage::log('An exception was encountered in humm_payments/paymentcontroller: ', Zend_Log::ERR, self::LOG_FILE);
+            Mage::log('An exception was encountered in validate of humm_payments/paymentcontroller: ', Zend_Log::ERR, self::LOG_FILE);
             $order = $this->getLastRealOrder();
             $this->cancelOrder($order);
             $this->_redirect('checkout/cart');
@@ -70,7 +70,7 @@ class Humm_Payments_PaymentController extends Mage_Core_Controller_Front_Action
             return false;
         }
 
-        if ($order->getBillingAddress()->getCountry() != $this->getSpecificCountry() || $order->getOrderCurrencyCode() != $specificCurrency) {
+        if ($order->getBillingAddress()->getCountry() != $this->getSpecificCountry()) {
             Mage::getSingleton('checkout/session')->addError("Orders from this country are not supported by humm. Please select a different payment option.");
             return false;
         }
@@ -169,7 +169,7 @@ class Humm_Payments_PaymentController extends Mage_Core_Controller_Front_Action
             $cancel_signature = Humm_Payments_Helper_Crypto::generateSignature($cancel_signature_query, $apiKey);
             $data = array(
                 'x_currency' => str_replace(PHP_EOL, ' ', $order->getOrderCurrencyCode()),
-//               'x_url_callback' => str_replace(PHP_EOL, ' ', Humm_Payments_Helper_DataHumm::getCompleteUrl()),
+//              'x_url_callback' => str_replace(PHP_EOL, ' ', Humm_Payments_Helper_DataHumm::getCompleteUrl()),
                 'x_url_complete' => str_replace(PHP_EOL, ' ', Humm_Payments_Helper_DataHumm::getCompleteUrl()),
                 'x_url_cancel' => str_replace(PHP_EOL, ' ', Humm_Payments_Helper_DataHumm::getCancelledUrl($orderId) . "&signature=" . $cancel_signature),
                 'x_shop_name' => str_replace(PHP_EOL, ' ', Mage::app()->getStore()->getCode()),
@@ -246,103 +246,6 @@ class Humm_Payments_PaymentController extends Mage_Core_Controller_Front_Action
     protected function getCheckoutSession()
     {
         return Mage::getSingleton('checkout/session');
-    }
-
-    /**
-     * @param Mage_Sales_Model_Order $order
-     * @param bool $refillStock
-     * @return $this
-     * @throws Exception
-     */
-    protected function restoreCart(Mage_Sales_Model_Order $order, $refillStock = false)
-    {
-
-        $quoteId = $order->getQuoteId();
-        $quote = Mage::getModel('sales/quote')->load($quoteId);
-
-        if ($quote->getId()) {
-            $quote->setIsActive(1);
-            if ($refillStock) {
-                $items = $this->_getProductsQty($quote->getAllItems());
-                if ($items != null) {
-                    Mage::getSingleton('cataloginventory/stock')->revertProductsSale($items);
-                }
-            }
-
-            $quote->setReservedOrderId(null);
-            $quote->save();
-            $this->getCheckoutSession()->replaceQuote($quote);
-        }
-
-        return $this;
-    }
-
-    /**
-     * Prepare array with information about used product qty and product stock item
-     * result is:
-     * array(
-     *  $productId  => array(
-     *      'qty'   => $qty,
-     *      'item'  => $stockItems|null
-     *  )
-     * )
-     *
-     * @param array $relatedItems
-     *
-     * @return array
-     */
-    protected function _getProductsQty($relatedItems)
-    {
-        $items = array();
-        foreach ($relatedItems as $item) {
-            $productId = $item->getProductId();
-            if (!$productId) {
-                continue;
-            }
-            $children = $item->getChildrenItems();
-            if ($children) {
-                foreach ($children as $childItem) {
-                    $this->_addItemToQtyArray($childItem, $items);
-                }
-            } else {
-                $this->_addItemToQtyArray($item, $items);
-            }
-        }
-
-        return $items;
-    }
-
-    /**
-     * Adds stock item qty to $items (creates new entry or increments existing one)
-     * $items is array with following structure:
-     * array(
-     *  $productId  => array(
-     *      'qty'   => $qty,
-     *      'item'  => $stockItems|null
-     *  )
-     * )
-     *
-     * @param Mage_Sales_Model_Quote_Item $quoteItem
-     * @param array &$items
-     */
-    protected function _addItemToQtyArray($quoteItem, &$items)
-    {
-        $productId = $quoteItem->getProductId();
-        if (!$productId) {
-            return;
-        }
-        if (isset($items[$productId])) {
-            $items[$productId]['qty'] += $quoteItem->getTotalQty();
-        } else {
-            $stockItem = null;
-            if ($quoteItem->getProduct()) {
-                $stockItem = $quoteItem->getProduct()->getStockItem();
-            }
-            $items[$productId] = array(
-                'item' => $stockItem,
-                'qty' => $quoteItem->getTotalQty()
-            );
-        }
     }
 
     /**
@@ -537,5 +440,102 @@ class Humm_Payments_PaymentController extends Mage_Core_Controller_Front_Action
         }
 
         return;
+    }
+
+    /**
+     * @param Mage_Sales_Model_Order $order
+     * @param bool $refillStock
+     * @return $this
+     * @throws Exception
+     */
+    protected function restoreCart(Mage_Sales_Model_Order $order, $refillStock = false)
+    {
+
+        $quoteId = $order->getQuoteId();
+        $quote = Mage::getModel('sales/quote')->load($quoteId);
+
+        if ($quote->getId()) {
+            $quote->setIsActive(1);
+            if ($refillStock) {
+                $items = $this->_getProductsQty($quote->getAllItems());
+                if ($items != null) {
+                    Mage::getSingleton('cataloginventory/stock')->revertProductsSale($items);
+                }
+            }
+
+            $quote->setReservedOrderId(null);
+            $quote->save();
+            $this->getCheckoutSession()->replaceQuote($quote);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Prepare array with information about used product qty and product stock item
+     * result is:
+     * array(
+     *  $productId  => array(
+     *      'qty'   => $qty,
+     *      'item'  => $stockItems|null
+     *  )
+     * )
+     *
+     * @param array $relatedItems
+     *
+     * @return array
+     */
+    protected function _getProductsQty($relatedItems)
+    {
+        $items = array();
+        foreach ($relatedItems as $item) {
+            $productId = $item->getProductId();
+            if (!$productId) {
+                continue;
+            }
+            $children = $item->getChildrenItems();
+            if ($children) {
+                foreach ($children as $childItem) {
+                    $this->_addItemToQtyArray($childItem, $items);
+                }
+            } else {
+                $this->_addItemToQtyArray($item, $items);
+            }
+        }
+
+        return $items;
+    }
+
+    /**
+     * Adds stock item qty to $items (creates new entry or increments existing one)
+     * $items is array with following structure:
+     * array(
+     *  $productId  => array(
+     *      'qty'   => $qty,
+     *      'item'  => $stockItems|null
+     *  )
+     * )
+     *
+     * @param Mage_Sales_Model_Quote_Item $quoteItem
+     * @param array &$items
+     */
+    protected function _addItemToQtyArray($quoteItem, &$items)
+    {
+        $productId = $quoteItem->getProductId();
+        if (!$productId) {
+            return;
+        }
+        if (isset($items[$productId])) {
+            $items[$productId]['qty'] += $quoteItem->getTotalQty();
+        } else {
+            $stockItem = null;
+            if ($quoteItem->getProduct()) {
+                $stockItem = $quoteItem->getProduct()->getStockItem();
+            }
+            $items[$productId] = array(
+                'item' => $stockItem,
+                'qty' => $quoteItem->getTotalQty()
+            );
+        }
     }
 }

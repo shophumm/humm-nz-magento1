@@ -8,9 +8,9 @@
 class Humm_Payments_Helper_DataHumm extends Mage_Core_Helper_Abstract
 {
 
-    const LAUNCH_TIME_URL = 'https://humm-variables.s3-ap-southeast-2.amazonaws.com/nz-launch-time.txt';
-    const LAUNCH_TIME_DEFAULT = "2030-05-11 00:00:00 UTC";
-    const LAUNCH_TIME_CHECK_ENDS = "2030-11-18 00:00:00 UTC";
+    const LAUNCH_TIME_URL = 'https://humm-nz-switch.s3-ap-southeast-2.amazonaws.com/switch-time.txt';
+    const LAUNCH_TIME_DEFAULT = "2020-09-14 10:00:00 AEST";
+    const LAUNCH_TIME_CHECK_ENDS = "2020-09-21 10:00:00 AEST";
     const Log_file = 'humm.log';
     const URLS = [
         'AU' => [
@@ -47,7 +47,8 @@ class Humm_Payments_Helper_DataHumm extends Mage_Core_Helper_Abstract
     {
         $launch_time_string = self::getLaunchDate();
         if ($launch_time_string) {
-            $is_after = (time() - strtotime($launch_time_string) >= 0) || Mage::getStoreConfig('payment/humm_payments/force_humm');
+            $is_after = ((time() - $launch_time_string) >= 0) || Mage::getStoreConfig('payment/humm_payments/force_humm');
+
         }
         else {
             $is_after = true;
@@ -116,6 +117,14 @@ class Humm_Payments_Helper_DataHumm extends Mage_Core_Helper_Abstract
     }
 
     /**
+     *
+     */
+    public static function getCallBackUrl()
+    {
+        return Mage::getBaseUrl() . 'humm_payments/payment/complete';
+    }
+
+    /**
      * @return string
      */
     public static function getCancelledUrl($orderId)
@@ -135,8 +144,9 @@ class Humm_Payments_Helper_DataHumm extends Mage_Core_Helper_Abstract
         }
         try {
             $remote_launch_time_string = file_get_contents(self::LAUNCH_TIME_URL);
+
         } catch (\Exception $exception) {
-            Mage::log(sprintf("Get ForceHumm %s Url Wrong %s", self::LAUNCH_TIME_URL, $exception->getMessage()), 4, self::Log_file);
+            Mage::log(sprintf("Get Remote ForceHumm %s Url Wrong %s", self::LAUNCH_TIME_URL, $exception->getMessage()), 4, self::Log_file);
             return false;
         }
         return strtotime($remote_launch_time_string)>= strtotime(self::LAUNCH_TIME_DEFAULT) ? strtotime($remote_launch_time_string):strtotime(self::LAUNCH_TIME_DEFAULT);
