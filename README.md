@@ -1,6 +1,8 @@
 
 ## Installation
 
+Magento1Plugin.pdf for reference 
+
 To deploy the plugin, clone this repo, and copy the following plugin files and folders into the corresponding folder under the Magento root directory.
 
 
