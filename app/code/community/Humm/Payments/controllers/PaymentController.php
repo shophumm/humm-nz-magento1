@@ -45,10 +45,10 @@ class Humm_Payments_PaymentController extends Mage_Core_Controller_Front_Action
                 $this->getCheckoutSession()->addError($this->__('Unable to start humm Checkout.'));
             }
         } else {
-            Mage::log('An exception was encountered in validate of humm_payments/paymentcontroller: ', Zend_Log::ERR, self::LOG_FILE);
+            Mage::log('An exception was encountered in humm_payments/paymentcontroller: ', Zend_Log::ERR, self::LOG_FILE);
             $order = $this->getLastRealOrder();
             $this->cancelOrder($order);
-            $this->_redirect('checkout/cart');
+            $this->_redirect('checkout/onepage/failure');
         }
     }
 
@@ -169,7 +169,6 @@ class Humm_Payments_PaymentController extends Mage_Core_Controller_Front_Action
             $cancel_signature = Humm_Payments_Helper_Crypto::generateSignature($cancel_signature_query, $apiKey);
             $data = array(
                 'x_currency' => str_replace(PHP_EOL, ' ', $order->getOrderCurrencyCode()),
-//              'x_url_callback' => str_replace(PHP_EOL, ' ', Humm_Payments_Helper_DataHumm::getCompleteUrl()),
                 'x_url_complete' => str_replace(PHP_EOL, ' ', Humm_Payments_Helper_DataHumm::getCompleteUrl()),
                 'x_url_cancel' => str_replace(PHP_EOL, ' ', Humm_Payments_Helper_DataHumm::getCancelledUrl($orderId) . "&signature=" . $cancel_signature),
                 'x_shop_name' => str_replace(PHP_EOL, ' ', Mage::app()->getStore()->getCode()),
@@ -246,200 +245,6 @@ class Humm_Payments_PaymentController extends Mage_Core_Controller_Front_Action
     protected function getCheckoutSession()
     {
         return Mage::getSingleton('checkout/session');
-    }
-
-    /**
-     * @param Mage_Sales_Model_Order $order
-     * @throws Exception
-     * @throws Mage_Core_Exception
-     */
-    protected function cancelOrder(Mage_Sales_Model_Order $order)
-    {
-        if ($order->getId() && $order->getState() != Mage_Sales_Model_Order::STATE_CANCELED) {
-            $order->registerCancellation("Order #" . ($order->getId()) . " was canceled by Humm Payment or customer.")->save();
-        }
-    }
-
-    /**
-     * Cancel an order given an order id
-     */
-    public function cancelAction()
-    {
-        $orderId = $this->getRequest()->get('orderId');
-        $order = $this->getOrderById($orderId);
-        $apiKey = Mage::helper('core')->decrypt($this->getApiKey());
-
-        if ($order && $order->getId()) {
-            $cancel_signature_query = [
-                "orderId" => $orderId,
-                "amount" => $order->getTotalDue(),
-                "email" => $order->getData('customer_email'),
-                "firstname" => $order->getCustomerFirstname(),
-                "lastname" => $order->getCustomerLastname()
-            ];
-            $cancel_signature = Humm_Payments_Helper_Crypto::generateSignature($cancel_signature_query, $apiKey);
-            $signatureValid = ($this->getRequest()->get('signature') == $cancel_signature);
-            if (!$signatureValid) {
-                Mage::log('Possible site forgery detected: invalid response signature.', Zend_Log::ALERT, self::LOG_FILE);
-                $this->_redirect('checkout/onepage/error', array('_secure' => false));
-                return;
-            }
-
-            Mage::log(
-                'Requested order cancellation by customer from Humm_payment. OrderId: ' . $order->getIncrementId(),
-                Zend_Log::DEBUG,
-                self::LOG_FILE
-            );
-            $this->cancelOrder($order);
-        }
-        $this->_redirect('checkout/cart');
-    }
-
-    /**
-     *
-     * callback - humm calls this once the payment process has been completed.
-     */
-    public function completeAction()
-    {
-        $isValid = Humm_Payments_Helper_Crypto::isValidSignature($this->getRequest()->getParams(), Mage::helper('core')->decrypt($this->getApiKey()));
-        $result = $this->getRequest()->get("x_result");
-        $orderId = $this->getRequest()->get("x_reference");
-        $transactionId = $this->getRequest()->get("x_gateway_reference");
-        $merchantNoHumm = $this->getRequest()->get('x_account_id');
-        $orderDue = $this->getRequest()->get('x_amount');
-        Mage::log(sprintf("End Response: [Response---:%s] [method = %s]", json_encode($this->getRequest()->getParams()), $this->getRequest()->getMethod()), 7, self::LOG_FILE);
-
-        $order = $this->getOrderById($orderId);
-        $merchantNo = Mage::getStoreConfig('payment/humm_payments/public_key');
-        $mesg = sprintf("Merchant No:%s  Web  %s |[Response---%s] [method--%s]", $merchantNoHumm, $merchantNo, json_encode($this->getRequest()->getParams()), $this->getRequest()->getMethod());
-        Mage::log($mesg, 7, self::LOG_FILE);
-        $msgIP = Mage::helper('core/http')->getRemoteAddr();
-        Mage::log("IP:" . $msgIP, 7, self::LOG_FILE);
-        if (($merchantNoHumm != $merchantNo)) {
-            $mesg = sprintf("Order ProtectCode ERROR: Merchant No:%s  Web  %s |[Response---%s] [method--%s]", $merchantNoHumm, $merchantNo, json_encode($this->getRequest()->getParams()), $this->getRequest()->getMethod());
-            Mage::log($mesg, 7, self::LOG_FILE);
-            $this->_redirect('checkout/onepage/error', array('_secure' => false));
-            return;
-        }
-        if (!$isValid) {
-            Mage::log('Possible site forgery detected: invalid response signature.', Zend_Log::ALERT, self::LOG_FILE);
-            $this->_redirect('checkout/onepage/error', array('_secure' => false));
-            return;
-        }
-
-        if (!$orderId) {
-            Mage::log("Humm returned a null order id. This may indicate an issue with the humm payment gateway.", Zend_Log::ERR, self::LOG_FILE);
-            $this->_redirect('checkout/onepage/error', array('_secure' => false));
-            return;
-        }
-
-        $isFromAsyncCallback = (strtoupper($this->getRequest()->getMethod() == "POST")) ? true : false;
-
-        if (!$order) {
-            Mage::log("Humm returned an id for an order that could not be retrieved: $orderId", Zend_Log::ERR, self::LOG_FILE);
-            $this->_redirect('checkout/onepage/error', array('_secure' => false));
-            return;
-        }
-        if (get_class($order) !== 'Mage_Sales_Model_Order') {
-            Mage::log("The instance of order returned is an unexpected type.", Zend_Log::ERR, self::LOG_FILE);
-        }
-
-        if ($result == "completed") {
-            $orderState = Mage_Sales_Model_Order::STATE_PROCESSING;
-            $orderStatus = Mage::getStoreConfig('payment/humm_payments/order_status');
-            $emailCustomer = Mage::getStoreConfig('payment/humm_payments/email_customer');
-            if (!$this->statusExists($orderStatus)) {
-                $orderStatus = $order->getConfig()->getStateDefaultStatus($orderState);
-            }
-
-            $order->setState($orderState, $orderStatus ? $orderStatus : true, $this->__("Humm authorisation success. Transaction #$transactionId"), $emailCustomer);
-            $payment = $order->getPayment();
-            $payment->setTransactionId($transactionId);
-
-            $payment->addTransaction(Mage_Sales_Model_Order_Payment_Transaction::TYPE_CAPTURE);
-
-            $payment->save();
-            $order->save();
-
-            if ($emailCustomer) {
-                $order->sendNewOrderEmail();
-            }
-
-            $invoiceAutomatically = Mage::getStoreConfig('payment/humm_payments/automatic_invoice');
-            if ($invoiceAutomatically) {
-                $this->invoiceOrder($order);
-            }
-        }
-        Mage::getSingleton('checkout/session')->unsQuoteId();
-        Mage::log("End Transaction", 7, self::LOG_FILE);
-        $this->sendResponse($isFromAsyncCallback, $result, $order->getState(), $orderId);
-        return;
-    }
-
-    private function statusExists($orderStatus)
-    {
-        try {
-            $orderStatusModel = Mage::getModel('sales/order_status');
-            if ($orderStatusModel) {
-                $statusesResCol = $orderStatusModel->getResourceCollection();
-                if ($statusesResCol) {
-                    $statuses = $statusesResCol->getData();
-                    foreach ($statuses as $status) {
-                        if ($orderStatus === $status["status"]) {
-                            return true;
-                        }
-                    }
-                }
-            }
-        } catch (Exception $e) {
-            Mage::log("Exception searching statuses: " . ($e->getMessage()), Zend_Log::ERR, self::LOG_FILE);
-        }
-
-        return false;
-    }
-
-    private function invoiceOrder(Mage_Sales_Model_Order $order)
-    {
-
-        $order->setActionFlag(Mage_Sales_Model_Order::ACTION_FLAG_HOLD, false);
-        if (!$order->canInvoice()) {
-            $order->addStatusHistoryComment('Order cannot be invoiced.', false);
-            $order->save();
-        }
-
-        $invoice = Mage::getModel('sales/service_order', $order)->prepareInvoice();
-
-        if (!$invoice->getTotalQty()) {
-            Mage::throwException(Mage::helper('core')->__('Cannot create an invoice without products.'));
-        }
-
-        $invoice->setRequestedCaptureCase(Mage_Sales_Model_Order_Invoice::CAPTURE_ONLINE);
-        $invoice->setTransactionId($order->getPayment()->getTransactionId());
-        $invoice->register();
-        $transactionSave = Mage::getModel('core/resource_transaction')
-            ->addObject($invoice)
-            ->addObject($invoice->getOrder());
-
-        $transactionSave->save();
-    }
-
-    private function sendResponse($isFromAsyncCallback, $result, $state, $orderId)
-    {
-        if ($isFromAsyncCallback) {
-            // if from POST request (from asynccallback)
-            $jsonData = json_encode(["result" => $state, "order_id" => $orderId]);
-            $this->getResponse()->setHeader('Content-type', 'application/json');
-            $this->getResponse()->setBody($jsonData);
-        } else {
-            // if from GET request (from browser redirect)
-            if ($result == "completed") {
-                $this->_redirect('checkout/onepage/success', array('_secure' => false));
-            } else {
-                $this->_redirect('checkout/onepage/failure', array('_secure' => false));
-            }
-        }
-
-        return;
     }
 
     /**
@@ -537,5 +342,209 @@ class Humm_Payments_PaymentController extends Mage_Core_Controller_Front_Action
                 'qty' => $quoteItem->getTotalQty()
             );
         }
+    }
+
+    /**
+     * @param Mage_Sales_Model_Order $order
+     * @throws Exception
+     * @throws Mage_Core_Exception
+     */
+    protected function cancelOrder(Mage_Sales_Model_Order $order)
+    {
+        if ($order->getId() && $order->getState() != Mage_Sales_Model_Order::STATE_CANCELED) {
+            $order->registerCancellation("Order #" . ($order->getId()) . " was canceled by Humm Payment or customer.")->save();
+        }
+    }
+
+    /**
+     * Cancel an order given an order id
+     */
+    public function cancelAction()
+    {
+        $orderId = $this->getRequest()->get('orderId');
+        $order = $this->getOrderById($orderId);
+        $apiKey = Mage::helper('core')->decrypt($this->getApiKey());
+        $mesg = sprintf("Order cancel Trigger |[Response---%s] [method--%s]", json_encode($this->getRequest()->getParams()), $this->getRequest()->getMethod());
+
+
+        if ($order && $order->getId()) {
+            $cancel_signature_query = [
+                "orderId" => $orderId,
+                "amount" => $order->getTotalDue(),
+                "email" => $order->getData('customer_email'),
+                "firstname" => $order->getCustomerFirstname(),
+                "lastname" => $order->getCustomerLastname()
+            ];
+            $cancel_signature = Humm_Payments_Helper_Crypto::generateSignature($cancel_signature_query, $apiKey);
+            $signatureValid = ($this->getRequest()->get('signature') == $cancel_signature);
+            if (!$signatureValid) {
+                Mage::log('Possible site forgery detected: invalid response signature.', Zend_Log::ALERT, self::LOG_FILE);
+                $this->_redirect('checkout/onepage/failure', array('_secure' => false));
+                return;
+            }
+
+            Mage::log(
+                'Requested order cancellation by customer from Humm_payment. OrderId: ' . $order->getIncrementId() . $mesg,
+                Zend_Log::DEBUG,
+                self::LOG_FILE
+            );
+            $this->cancelOrder($order);
+        }
+        $this->_redirect('checkout/onepage/failure', array('_secure' => false));
+    }
+
+    /**
+     *
+     * callback - humm calls this once the payment process has been completed.
+     */
+    public function completeAction()
+    {
+        $isValid = Humm_Payments_Helper_Crypto::isValidSignature($this->getRequest()->getParams(), Mage::helper('core')->decrypt($this->getApiKey()));
+        $result = $this->getRequest()->get("x_result");
+        $orderId = $this->getRequest()->get("x_reference");
+        $transactionId = $this->getRequest()->get("x_gateway_reference");
+        $merchantNoHumm = $this->getRequest()->get('x_account_id');
+        $orderDue = $this->getRequest()->get('x_amount');
+        Mage::log(sprintf("End Response: [Response---:%s] [method = %s]", json_encode($this->getRequest()->getParams()), $this->getRequest()->getMethod()), 7, self::LOG_FILE);
+        if (!$isValid) {
+            Mage::log('Possible site forgery detected: invalid response signature.' . $isValid, Zend_Log::ALERT, self::LOG_FILE);
+            Mage::getSingleton('core/session')->addError('Possible site forgery detected: invalid response signature');
+            $this->_redirect('checkout/onepage/cart', array('_secure' => false));
+            return;
+        }
+        $order = $this->getOrderById($orderId);
+        $merchantNo = Mage::getStoreConfig('payment/humm_payments/public_key');
+        $mesg = sprintf("Merchant No:%s  Web  %s |[Response---%s] [method--%s]", $merchantNoHumm, $merchantNo, json_encode($this->getRequest()->getParams()), $this->getRequest()->getMethod());
+        Mage::log($mesg, 7, self::LOG_FILE);
+        $msgIP = Mage::helper('core/http')->getRemoteAddr();
+        Mage::log("IP:" . $msgIP, 7, self::LOG_FILE);
+        if (($merchantNoHumm != $merchantNo)) {
+            $mesg = sprintf(" ERROR: Merchant No:%s  Web  %s |[Response---%s] [method--%s]", $merchantNoHumm, $merchantNo, json_encode($this->getRequest()->getParams()), $this->getRequest()->getMethod());
+            Mage::log($mesg, 7, self::LOG_FILE);
+            $this->_redirect('checkout/onepage/failure', array('_secure' => false));
+            return;
+        }
+        if (!$isValid) {
+            Mage::log('Possible site forgery detected: invalid response signature.', Zend_Log::ALERT, self::LOG_FILE);
+            $this->_redirect('checkout/onepage/failure', array('_secure' => false));
+            return;
+        }
+
+        if (!$orderId) {
+            Mage::log("Humm returned a null order id. This may indicate an issue with the humm payment gateway.", Zend_Log::ERR, self::LOG_FILE);
+            $this->_redirect('checkout/onepage/failure', array('_secure' => false));
+            return;
+        }
+
+        $isFromAsyncCallback = (strtoupper($this->getRequest()->getMethod() == "POST")) ? true : false;
+
+        if (!$order) {
+            Mage::log("Humm returned an id for an order that could not be retrieved: $orderId", Zend_Log::ERR, self::LOG_FILE);
+            $this->_redirect('checkout/onepage/failure', array('_secure' => false));
+            return;
+        }
+        if (get_class($order) !== 'Mage_Sales_Model_Order') {
+            Mage::log("The instance of order returned is an unexpected type.", Zend_Log::ERR, self::LOG_FILE);
+        }
+
+        if ($result == "completed") {
+            $orderState = Mage_Sales_Model_Order::STATE_PROCESSING;
+            $orderStatus = Mage::getStoreConfig('payment/humm_payments/order_status');
+            $emailCustomer = Mage::getStoreConfig('payment/humm_payments/email_customer');
+            if (!$this->statusExists($orderStatus)) {
+                $orderStatus = $order->getConfig()->getStateDefaultStatus($orderState);
+            }
+
+            $order->setState($orderState, $orderStatus ? $orderStatus : true, $this->__("Humm authorisation success. Transaction #$transactionId"), $emailCustomer);
+            $payment = $order->getPayment();
+            $payment->setTransactionId($transactionId);
+
+            $payment->addTransaction(Mage_Sales_Model_Order_Payment_Transaction::TYPE_CAPTURE);
+
+            $payment->save();
+            $order->save();
+
+            if ($emailCustomer) {
+                $order->sendNewOrderEmail();
+            }
+
+            $invoiceAutomatically = Mage::getStoreConfig('payment/humm_payments/automatic_invoice');
+            if ($invoiceAutomatically) {
+                $this->invoiceOrder($order);
+            }
+            Mage::getSingleton('checkout/session')->unsQuoteId();
+        }
+        if ($result == "failed") {
+            if ($order && $order->getId()) {
+                $this->cancelOrder($order);
+            }
+        }
+        Mage::log("End Transaction", 7, self::LOG_FILE);
+        $this->sendResponse($isFromAsyncCallback, $result, $order->getState(), $orderId);
+        return;
+    }
+
+    private function statusExists($orderStatus)
+    {
+        try {
+            $orderStatusModel = Mage::getModel('sales/order_status');
+            if ($orderStatusModel) {
+                $statusesResCol = $orderStatusModel->getResourceCollection();
+                if ($statusesResCol) {
+                    $statuses = $statusesResCol->getData();
+                    foreach ($statuses as $status) {
+                        if ($orderStatus === $status["status"]) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        } catch (Exception $e) {
+            Mage::log("Exception searching statuses: " . ($e->getMessage()), Zend_Log::ERR, self::LOG_FILE);
+        }
+
+        return false;
+    }
+
+    private function invoiceOrder(Mage_Sales_Model_Order $order)
+    {
+
+        $order->setActionFlag(Mage_Sales_Model_Order::ACTION_FLAG_HOLD, false);
+        if (!$order->canInvoice()) {
+            $order->addStatusHistoryComment('Order cannot be invoiced.', false);
+            $order->save();
+        }
+
+        $invoice = Mage::getModel('sales/service_order', $order)->prepareInvoice();
+
+        if (!$invoice->getTotalQty()) {
+            Mage::throwException(Mage::helper('core')->__('Cannot create an invoice without products.'));
+        }
+
+        $invoice->setRequestedCaptureCase(Mage_Sales_Model_Order_Invoice::CAPTURE_ONLINE);
+        $invoice->setTransactionId($order->getPayment()->getTransactionId());
+        $invoice->register();
+        $transactionSave = Mage::getModel('core/resource_transaction')
+            ->addObject($invoice)
+            ->addObject($invoice->getOrder());
+
+        $transactionSave->save();
+    }
+
+    private function sendResponse($isFromAsyncCallback, $result, $state, $orderId)
+    {
+        if ($isFromAsyncCallback) {
+            $jsonData = json_encode(["result" => $state, "order_id" => $orderId]);
+            $this->getResponse()->setHeader('Content-type', 'application/json');
+            $this->getResponse()->setBody($jsonData);
+        } else {
+            if ($result == "completed") {
+                $this->_redirect('checkout/onepage/success', array('_secure' => false));
+            } else {
+                $this->_redirect('checkout/onepage/failure', array('_secure' => false));
+            }
+        }
+
+        return;
     }
 }
