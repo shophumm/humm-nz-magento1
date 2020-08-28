@@ -29,8 +29,8 @@
                         <frontend_class>Humm-payment</frontend_class>
                         <frontend_model>humm_payments/adminhtml_system_config_fieldset_wizard</frontend_model>
                         <active_path>payment/humm_payments/active</active_path>
-                        <comment><![CDATA[Little things. Big things.Everything<a href="https://docs.shophumm.com.au/ecommerce/magento_1/" target="_blank">learn more</a>
-                         Don't have an account? Click <a href="https://www.shophumm.com.au/sell-with-humm" target="_blank">here</a> to apply for a <strong>Humm Business Account</strong>]]></comment>
+                        <comment><![CDATA[Little things. Big things.Everything<a href="https://docs.shophumm.co.nz/ecommerce/magento_1/" target="_blank">learn more</a>
+                         Don't have an account? Click <a href="https://www.shophumm.co.nz/" target="_blank">here</a> to apply for a <strong>Humm Business Account</strong>]]></comment>
                         <fields>
                             <humm_payments_settings type="group" translate="label">
                                 <label>Settings</label>
