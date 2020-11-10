@@ -313,7 +313,6 @@ class Humm_Payments_Model_Config
         if ($methodCode === null) {
             $methodCode = $this->getMethodCode();
         }
-
-        return $this->getFlag("payment/{$methodCode}/active") && $this->isMerchantCountrySupported();
+          return $this->getFlag("payment/{$methodCode}/active") && $this->isMerchantCountrySupported();
     }
 }
